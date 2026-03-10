@@ -2,7 +2,7 @@ use bevy::prelude::{
     AssetServer, Commands, EventReader, EventWriter, GlobalTransform, Query, Res, Transform,
 };
 
-use rose_data::SoundId;
+use rose_data::{SoundId, LEVEL_UP};
 use rose_file_readers::VfsPathBuf;
 use rose_game_common::components::Npc;
 
@@ -71,7 +71,7 @@ pub fn client_entity_event_system(
                 };
 
                 if let Ok(global_transform) = query_global_transform.get(entity) {
-                    if let Some(sound_data) = game_data.sounds.get_sound(SoundId::new(16).unwrap())
+                    if let Some(sound_data) = game_data.sounds.get_sound(SoundId::new(LEVEL_UP).unwrap())
                     {
                         commands.spawn((
                             sound_category,
