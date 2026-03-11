@@ -1,14 +1,15 @@
+use crate::{
+    audio::SoundGain, components::SoundCategory, resources::TargetingType, save_config,
+    ui::UiStateWindows, Config, GraphicsModeConfig,
+};
 use bevy::prelude::{Local, Query, ResMut};
+use bevy::window::WindowMode;
 use bevy_egui::{egui, EguiContexts};
 use std::path::Path;
 
-use crate::{
-    audio::SoundGain, components::SoundCategory, resources::TargetingType, save_config,
-    ui::UiStateWindows, Config,
-};
-
 #[derive(Copy, Clone, PartialEq, Debug)]
 enum SettingsPage {
+    Video,
     Sound,
     Interface,
 }
@@ -20,7 +21,7 @@ pub struct UiStateSettings {
 impl Default for UiStateSettings {
     fn default() -> Self {
         Self {
-            page: SettingsPage::Sound,
+            page: SettingsPage::Video,
         }
     }
 }
@@ -39,6 +40,7 @@ pub fn ui_settings_system(
             let mut save_settings = false;
 
             ui.horizontal(|ui| {
+                ui.selectable_value(&mut ui_state_settings.page, SettingsPage::Video, "Video");
                 ui.selectable_value(&mut ui_state_settings.page, SettingsPage::Sound, "Sound");
                 ui.selectable_value(
                     &mut ui_state_settings.page,
@@ -48,6 +50,92 @@ pub fn ui_settings_system(
             });
 
             match ui_state_settings.page {
+                SettingsPage::Video => {
+                    egui::Grid::new("video_settings")
+                        .num_columns(2)
+                        .show(ui, |ui| {
+                            let mut mode_changed = false;
+                            let graphics = &mut config.graphics;
+
+                            ui.label("Screen mode:");
+
+                            let mut selected_mode =
+                                if graphics.mode == GraphicsModeConfig::Fullscreen {
+                                    WindowMode::Fullscreen
+                                } else {
+                                    WindowMode::Windowed
+                                };
+
+                            egui::ComboBox::from_id_source("screen_mode")
+                                .selected_text(format!("{:?}", selected_mode))
+                                .show_ui(ui, |ui| {
+                                    mode_changed |= ui
+                                        .selectable_value(
+                                            &mut selected_mode,
+                                            WindowMode::Windowed,
+                                            format!("{:?}", WindowMode::Windowed),
+                                        )
+                                        .changed();
+
+                                    mode_changed |= ui
+                                        .selectable_value(
+                                            &mut selected_mode,
+                                            WindowMode::Fullscreen,
+                                            format!("{:?}", WindowMode::Fullscreen),
+                                        )
+                                        .changed();
+                                });
+
+                            ui.end_row();
+                            ui.label("Resolution:");
+
+                            ui.add_enabled_ui(selected_mode == WindowMode::Windowed, |ui| {
+                                egui::ComboBox::from_id_source("resolution")
+                                    .selected_text(match graphics.mode {
+                                        GraphicsModeConfig::Window { width, height } => {
+                                            format!("{}x{}", width, height)
+                                        }
+                                        GraphicsModeConfig::Fullscreen => "".to_string(),
+                                    })
+                                    .show_ui(ui, |ui| {
+                                        for resolution in &graphics.resolutions {
+                                            let (width, height) = resolution;
+
+                                            save_settings |= ui
+                                                .selectable_value(
+                                                    &mut graphics.mode,
+                                                    GraphicsModeConfig::Window {
+                                                        width: width.clone() as f32,
+                                                        height: height.clone() as f32,
+                                                    },
+                                                    format!("{}x{}", width, height),
+                                                )
+                                                .changed();
+                                        }
+                                    });
+                            });
+
+                            if mode_changed {
+                                match selected_mode {
+                                    WindowMode::Windowed => {
+                                        let (width, height) =
+                                            graphics.resolutions.last().unwrap_or(&(1920, 1080));
+
+                                        config.graphics.mode = GraphicsModeConfig::Window {
+                                            width: width.clone() as f32,
+                                            height: height.clone() as f32,
+                                        }
+                                    }
+                                    WindowMode::Fullscreen => {
+                                        config.graphics.mode = GraphicsModeConfig::Fullscreen
+                                    }
+                                    _ => {}
+                                }
+
+                                save_settings = true;
+                            }
+                        });
+                }
                 SettingsPage::Sound => {
                     egui::Grid::new("sound_settings_gain")
                         .num_columns(2)
