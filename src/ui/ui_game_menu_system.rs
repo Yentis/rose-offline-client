@@ -1,3 +1,4 @@
+use bevy::app::AppExit;
 use bevy::prelude::{Assets, EventWriter, Local, Res, ResMut};
 use bevy_egui::{egui, EguiContexts};
 
@@ -33,6 +34,7 @@ pub fn ui_game_menu_system(
     ui_resources: Res<UiResources>,
     mut ui_sound_events: EventWriter<UiSoundEvent>,
     dialog_assets: Res<Assets<Dialog>>,
+    mut exit: EventWriter<AppExit>,
 ) {
     let dialog = if let Some(dialog) = dialog_assets.get(&ui_resources.dialog_game_menu) {
         dialog
@@ -147,8 +149,8 @@ pub fn ui_game_menu_system(
     }
 
     if response_button_exit.map_or(false, |r| r.clicked()) {
-        // TODO: Exit dialog
         ui_state_windows.menu_open = false;
+        exit.send(AppExit);
     }
 
     if !egui_context.ctx_mut().wants_keyboard_input() {
