@@ -27,6 +27,7 @@ mod world_connection;
 mod world_rates;
 mod world_time;
 mod zone_time;
+mod interface_settings;
 
 pub use account::Account;
 pub use app_state::AppState;
@@ -49,6 +50,7 @@ pub use server_configuration::ServerConfiguration;
 pub use server_list::{ServerList, ServerListGameServer, ServerListWorldServer};
 pub use sound_cache::SoundCache;
 pub use sound_settings::SoundSettings;
+pub use interface_settings::{InterfaceSettings, TargetingType};
 pub use specular_texture::SpecularTexture;
 pub use ui_resources::{
     load_ui_resources, ui_requested_cursor_apply_system, update_ui_resources, UiCursorType,

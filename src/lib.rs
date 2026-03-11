@@ -65,7 +65,7 @@ use resources::{
     load_ui_resources, run_network_thread, ui_requested_cursor_apply_system, update_ui_resources,
     AppState, ClientEntityList, DamageDigitsSpawner, DebugRenderConfig, GameData, NameTagSettings,
     NetworkThread, NetworkThreadMessage, RenderConfiguration, SelectedTarget, ServerConfiguration,
-    SoundCache, SoundSettings, SpecularTexture, VfsResource, WorldTime, ZoneTime,
+    SoundCache, SoundSettings, InterfaceSettings, TargetingType, SpecularTexture, VfsResource, WorldTime, ZoneTime,
 };
 use scripting::RoseScriptingPlugin;
 use systems::{
@@ -350,6 +350,20 @@ impl Default for SoundConfig {
     }
 }
 
+#[derive(Deserialize)]
+#[serde(default)]
+pub struct InterfaceConfig {
+    pub targeting: TargetingType,
+}
+
+impl Default for InterfaceConfig {
+    fn default() -> Self {
+        Self {
+            targeting: TargetingType::DoubleClick,
+        }
+    }
+}
+
 #[derive(Default, Deserialize)]
 #[serde(default)]
 pub struct Config {
@@ -360,6 +374,7 @@ pub struct Config {
     pub graphics: GraphicsConfig,
     pub server: ServerConfig,
     pub sound: SoundConfig,
+    pub interface: InterfaceConfig,
 }
 
 pub fn load_config(path: &Path) -> Config {
@@ -572,6 +587,9 @@ fn run_client(config: &Config, app_state: AppState, mut systems_config: SystemsC
                 SoundCategory::NpcSounds => config.sound.volume.npc_sounds,
                 SoundCategory::Ui => config.sound.volume.ui_sounds,
             },
+        })
+        .insert_resource(InterfaceSettings {
+            targeting: config.interface.targeting,
         })
         .add_plugins((
             RoseAnimationPlugin,
