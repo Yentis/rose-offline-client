@@ -2,6 +2,8 @@
 #![allow(clippy::too_many_arguments)]
 
 use animation::RoseAnimationPlugin;
+use bevy::prelude::Resource;
+use bevy::render::settings::Backends;
 use bevy::{
     core_pipeline::{bloom::BloomSettings, clear_color::ClearColor},
     ecs::event::Events,
@@ -20,16 +22,16 @@ use bevy_egui::{egui, EguiContexts, EguiSet};
 use bevy_rapier3d::plugin::PhysicsSet;
 use enum_map::enum_map;
 use exe_resource_loader::{ExeResourceCursor, ExeResourceLoader};
-use serde::Deserialize;
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
-};
-
 use rose_data::{CharacterMotionDatabaseOptions, NpcDatabaseOptions, ZoneId};
 use rose_file_readers::{
     AruaVfsIndex, HostFilesystemDevice, IrosePhVfsIndex, LtbFile, StbFile, TitanVfsIndex, VfsIndex,
     VirtualFilesystem, VirtualFilesystemDevice, ZscFile,
+};
+use serde::{Deserialize, Serialize};
+use std::fmt::Error;
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
 };
 
 pub mod animation;
@@ -50,6 +52,8 @@ pub mod vfs_asset_io;
 pub mod zms_asset_loader;
 pub mod zone_loader;
 
+use crate::audio::SoundGain;
+use crate::components::SoundCategory;
 use audio::OddioPlugin;
 use events::{
     BankEvent, CharacterSelectEvent, ChatboxEvent, ClanDialogEvent, ClientEntityEvent,
@@ -63,9 +67,10 @@ use model_loader::ModelLoader;
 use render::{DamageDigitMaterial, RoseRenderPlugin};
 use resources::{
     load_ui_resources, run_network_thread, ui_requested_cursor_apply_system, update_ui_resources,
-    AppState, ClientEntityList, DamageDigitsSpawner, DebugRenderConfig, GameData, NameTagSettings,
-    NetworkThread, NetworkThreadMessage, RenderConfiguration, SelectedTarget, ServerConfiguration,
-    SoundCache, SoundSettings, InterfaceSettings, TargetingType, SpecularTexture, VfsResource, WorldTime, ZoneTime,
+    AppState, ClientEntityList, DamageDigitsSpawner, DebugRenderConfig, GameData, InterfaceConfig,
+    NameTagSettings, NetworkThread, NetworkThreadMessage, RenderConfiguration, SelectedTarget,
+    ServerConfiguration, SoundCache, SoundConfig, SpecularTexture, TargetingType, VfsResource,
+    WorldTime, ZoneTime,
 };
 use scripting::RoseScriptingPlugin;
 use systems::{
@@ -88,11 +93,11 @@ use systems::{
     npc_model_update_system, orbit_camera_system, particle_sequence_system,
     passive_recovery_system, pending_damage_system, pending_skill_effect_system,
     personal_store_model_add_collider_system, personal_store_model_system, player_command_system,
-    projectile_system, quest_trigger_system, sound_trigger_system, spawn_effect_system, spawn_projectile_system,
-    status_effect_system, system_func_event_system, update_position_system, use_item_event_system,
-    vehicle_model_system, vehicle_sound_system, visible_status_effects_system,
-    world_connection_system, world_time_system, zone_time_system, zone_viewer_enter_system,
-    DebugInspectorPlugin,
+    projectile_system, quest_trigger_system, sound_trigger_system, spawn_effect_system,
+    spawn_projectile_system, status_effect_system, system_func_event_system,
+    update_position_system, use_item_event_system, vehicle_model_system, vehicle_sound_system,
+    visible_status_effects_system, world_connection_system, world_time_system, zone_time_system,
+    zone_viewer_enter_system, DebugInspectorPlugin,
 };
 use ui::{
     load_dialog_sprites_system, ui_bank_system, ui_character_create_system,
@@ -116,16 +121,14 @@ use vfs_asset_io::VfsAssetIo;
 use zms_asset_loader::{ZmsAssetLoader, ZmsMaterialNumFaces, ZmsNoSkinAssetLoader};
 use zone_loader::{zone_loader_system, ZoneLoader, ZoneLoaderAsset};
 
-use crate::components::SoundCategory;
-
-#[derive(Default, Deserialize)]
+#[derive(Default, Deserialize, Serialize, Clone)]
 #[serde(default)]
 pub struct AccountConfig {
     pub username: String,
     pub password: String,
 }
 
-#[derive(Default, Deserialize)]
+#[derive(Default, Deserialize, Serialize, Clone)]
 #[serde(default)]
 pub struct AutoLoginConfig {
     pub enabled: bool,
@@ -134,7 +137,7 @@ pub struct AutoLoginConfig {
     pub character_name: Option<String>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize, Clone)]
 #[serde(tag = "type", content = "path")]
 pub enum FilesystemDeviceConfig {
     #[serde(rename = "vfs")]
@@ -149,9 +152,11 @@ pub enum FilesystemDeviceConfig {
     IrosePh(String),
 }
 
-#[derive(Default, Deserialize)]
+#[derive(Default, Deserialize, Serialize, Clone)]
 #[serde(default)]
 pub struct FilesystemConfig {
+    #[serde(skip)]
+    pub config_path: String,
     pub devices: Vec<FilesystemDeviceConfig>,
 }
 
@@ -240,7 +245,7 @@ impl FilesystemConfig {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize, Clone)]
 #[serde(default)]
 pub struct ServerConfig {
     pub ip: String,
@@ -256,7 +261,7 @@ impl Default for ServerConfig {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize, Clone)]
 #[serde(default)]
 pub struct GameConfig {
     pub data_version: String,
@@ -274,7 +279,7 @@ impl Default for GameConfig {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize, Clone)]
 #[serde(tag = "type")]
 pub enum GraphicsModeConfig {
     #[serde(rename = "window")]
@@ -283,7 +288,7 @@ pub enum GraphicsModeConfig {
     Fullscreen,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize, Clone)]
 #[serde(default)]
 pub struct GraphicsConfig {
     pub mode: GraphicsModeConfig,
@@ -306,65 +311,7 @@ impl Default for GraphicsConfig {
     }
 }
 
-#[derive(Deserialize)]
-#[serde(default)]
-pub struct SoundVolumeConfig {
-    pub global: f32,
-    pub background_music: f32,
-    pub player_footstep: f32,
-    pub player_combat: f32,
-    pub other_footstep: f32,
-    pub other_combat: f32,
-    pub npc_sounds: f32,
-    pub ui_sounds: f32,
-}
-
-impl Default for SoundVolumeConfig {
-    fn default() -> Self {
-        Self {
-            global: 0.6,
-            background_music: 0.15,
-            player_footstep: 0.9,
-            player_combat: 1.0,
-            other_footstep: 0.5,
-            other_combat: 0.5,
-            npc_sounds: 0.6,
-            ui_sounds: 0.5,
-        }
-    }
-}
-
-#[derive(Deserialize)]
-#[serde(default)]
-pub struct SoundConfig {
-    pub enabled: bool,
-    pub volume: SoundVolumeConfig,
-}
-
-impl Default for SoundConfig {
-    fn default() -> Self {
-        Self {
-            enabled: true,
-            volume: SoundVolumeConfig::default(),
-        }
-    }
-}
-
-#[derive(Deserialize)]
-#[serde(default)]
-pub struct InterfaceConfig {
-    pub targeting: TargetingType,
-}
-
-impl Default for InterfaceConfig {
-    fn default() -> Self {
-        Self {
-            targeting: TargetingType::DoubleClick,
-        }
-    }
-}
-
-#[derive(Default, Deserialize)]
+#[derive(Default, Deserialize, Serialize, Resource, Clone)]
 #[serde(default)]
 pub struct Config {
     pub account: AccountConfig,
@@ -403,6 +350,23 @@ pub fn load_config(path: &Path) -> Config {
             );
             Config::default()
         }
+    }
+}
+
+pub fn save_config(config: &Config, path: &Path) {
+    let toml_string = match toml::to_string(config) {
+        Ok(toml_string) => toml_string,
+        Err(error) => {
+            println!("Failed to serialize configuration with error: {}", error);
+            return;
+        }
+    };
+
+    if let Err(error) = std::fs::write(path, &toml_string) {
+        println!(
+            "Failed to write configuration from {} with error: {}",
+            toml_string, error,
+        );
     }
 }
 
@@ -575,22 +539,7 @@ fn run_client(config: &Config, app_state: AppState, mut systems_config: SystemsC
             preset_character_name: config.auto_login.character_name.clone(),
             auto_login: config.auto_login.enabled,
         })
-        .insert_resource(SoundSettings {
-            enabled: config.sound.enabled,
-            global_gain: config.sound.volume.global,
-            gains: enum_map! {
-                SoundCategory::BackgroundMusic => config.sound.volume.background_music,
-                SoundCategory::PlayerFootstep => config.sound.volume.player_footstep,
-                SoundCategory::PlayerCombat => config.sound.volume.player_combat,
-                SoundCategory::OtherFootstep => config.sound.volume.other_footstep,
-                SoundCategory::OtherCombat => config.sound.volume.other_combat,
-                SoundCategory::NpcSounds => config.sound.volume.npc_sounds,
-                SoundCategory::Ui => config.sound.volume.ui_sounds,
-            },
-        })
-        .insert_resource(InterfaceSettings {
-            targeting: config.interface.targeting,
-        })
+        .insert_resource(config.clone())
         .add_plugins((
             RoseAnimationPlugin,
             RoseRenderPlugin,

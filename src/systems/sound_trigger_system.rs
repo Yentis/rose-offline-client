@@ -1,13 +1,19 @@
-use bevy::asset::AssetServer;
-use bevy::prelude::{Commands, Entity, EventReader, EventWriter, GlobalTransform, Query, Res, Transform};
-use rose_data::{SoundId, GET_ITEM, LEVEL_UP};
-use rose_game_common::components::{ItemSlot, Npc};
-use crate::audio::{SpatialSound};
+use crate::audio::SpatialSound;
 use crate::components::SoundCategory;
 use crate::events::{ClientEntityEvent, PlayerCommandEvent, UseItemEvent};
-use crate::resources::{GameData, SoundCache, SoundSettings};
-use crate::systems::player_command_system::{PlayerQuery};
+use crate::resources::{GameData, SoundCache};
+use crate::systems::player_command_system::PlayerQuery;
 use crate::ui::UiSoundEvent;
+use crate::Config;
+use bevy::asset::AssetServer;
+use bevy::prelude::{
+    Commands, Entity, EventReader, EventWriter, GlobalTransform, Query, Res, Transform,
+};
+use rose_data::SoundId;
+use rose_game_common::components::{ItemSlot, Npc};
+
+const LEVEL_UP: u16 = 16;
+const GET_ITEM: u16 = 531;
 
 pub fn sound_trigger_system(
     mut commands: Commands,
@@ -19,33 +25,30 @@ pub fn sound_trigger_system(
     query_global_transform: Query<&GlobalTransform>,
     query_npc: Query<(&Npc, &GlobalTransform)>,
     game_data: Res<GameData>,
-    sound_settings: Res<SoundSettings>,
+    config: Res<Config>,
     sound_cache: Res<SoundCache>,
     asset_server: Res<AssetServer>,
 ) {
     let player = match query_player.get_single_mut() {
         Ok(player) => player,
-        Err(_) => return
+        Err(_) => return,
     };
 
-    let mut play_sound = |
-        sound_id: SoundId,
-        sound_category: SoundCategory,
-        global_transform: &GlobalTransform,
-    | {
-        let sound_data = match game_data.sounds.get_sound(sound_id) {
-            Some(sound_data) => sound_data,
-            None => return
+    let mut play_sound =
+        |sound_id: SoundId, sound_category: SoundCategory, global_transform: &GlobalTransform| {
+            let sound_data = match game_data.sounds.get_sound(sound_id) {
+                Some(sound_data) => sound_data,
+                None => return,
+            };
+
+            commands.spawn((
+                sound_category,
+                config.sound.gain(sound_category),
+                SpatialSound::new(sound_cache.load(sound_data, &asset_server)),
+                Transform::from_translation(global_transform.translation()),
+                GlobalTransform::from_translation(global_transform.translation()),
+            ));
         };
-
-        commands.spawn((
-            sound_category,
-            sound_settings.gain(sound_category),
-            SpatialSound::new(sound_cache.load(sound_data, &asset_server)),
-            Transform::from_translation(global_transform.translation()),
-            GlobalTransform::from_translation(global_transform.translation()),
-        ));
-    };
 
     let get_entity_sound = |entity: Entity| -> Option<(SoundCategory, &GlobalTransform)> {
         let sound_category = if player.entity == entity {
@@ -69,15 +72,15 @@ pub fn sound_trigger_system(
         let event = event.clone();
 
         match event {
-            PlayerCommandEvent::EquipAmmo(item_slot) |
-            PlayerCommandEvent::EquipEquipment(item_slot) |
-            PlayerCommandEvent::EquipVehicle(item_slot) => {
+            PlayerCommandEvent::EquipAmmo(item_slot)
+            | PlayerCommandEvent::EquipEquipment(item_slot)
+            | PlayerCommandEvent::EquipVehicle(item_slot) => {
                 if let Some(sound_id) = get_equip_sound(item_slot) {
                     ui_sound_events.send(UiSoundEvent::new(sound_id));
                 }
             }
-            PlayerCommandEvent::PickupDropItem(_, _, _) |
-            PlayerCommandEvent::PickupDropMoney(_, _) => {
+            PlayerCommandEvent::PickupDropItem(_, _, _)
+            | PlayerCommandEvent::PickupDropMoney(_, _) => {
                 ui_sound_events.send(UiSoundEvent::new(SoundId::new(GET_ITEM).unwrap()));
             }
             _ => {}
@@ -89,24 +92,20 @@ pub fn sound_trigger_system(
             ClientEntityEvent::Die(entity) => {
                 let (npc, global_transform) = match query_npc.get(entity) {
                     Ok((npc, global_transform)) => (npc, global_transform),
-                    Err(_) => continue
+                    Err(_) => continue,
                 };
 
                 let npc_data = match game_data.npcs.get_npc(npc.id) {
                     Some(npc_data) => npc_data,
-                    None => continue
+                    None => continue,
                 };
 
                 let sound_id = match npc_data.die_sound_id {
                     Some(sound_id) => sound_id,
-                    None => continue
+                    None => continue,
                 };
 
-                play_sound(
-                    sound_id,
-                    SoundCategory::NpcSounds,
-                    global_transform,
-                );
+                play_sound(sound_id, SoundCategory::NpcSounds, global_transform);
             }
             ClientEntityEvent::LevelUp(entity, _) => {
                 if let Some((sound_category, global_transform)) = get_entity_sound(entity) {
@@ -125,20 +124,16 @@ pub fn sound_trigger_system(
 
         let item_data = match game_data.items.get_consumable_item(item.item_number) {
             Some(item_data) => item_data,
-            None => continue
+            None => continue,
         };
 
         let sound_id = match item_data.effect_sound_id {
             Some(sound_id) => sound_id,
-            None => continue
+            None => continue,
         };
 
         if let Some((sound_category, global_transform)) = get_entity_sound(entity) {
-            play_sound(
-                sound_id,
-                sound_category,
-                global_transform,
-            );
+            play_sound(sound_id, sound_category, global_transform);
         }
     }
 }

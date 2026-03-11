@@ -13,14 +13,10 @@ use bevy_rapier3d::prelude::{CollisionGroups, QueryFilter, RapierContext};
 
 use rose_game_common::components::{ItemDrop, Team};
 
-use crate::{
-    components::{
-        ClientEntity, ClientEntityType, ColliderParent, PlayerCharacter, Position, ZoneObject,
-        COLLISION_FILTER_CLICKABLE, COLLISION_GROUP_PHYSICS_TOY, COLLISION_GROUP_PLAYER,
-    },
-    events::{MoveDestinationEffectEvent, PlayerCommandEvent},
-    resources::{SelectedTarget, UiCursorType, UiRequestedCursor, InterfaceSettings, TargetingType},
-};
+use crate::{components::{
+    ClientEntity, ClientEntityType, ColliderParent, PlayerCharacter, Position, ZoneObject,
+    COLLISION_FILTER_CLICKABLE, COLLISION_GROUP_PHYSICS_TOY, COLLISION_GROUP_PLAYER,
+}, events::{MoveDestinationEffectEvent, PlayerCommandEvent}, resources::{SelectedTarget, UiCursorType, UiRequestedCursor, TargetingType}, Config};
 
 #[derive(WorldQuery)]
 pub struct PlayerQuery<'w> {
@@ -48,7 +44,7 @@ pub fn game_mouse_input_system(
     mut move_destination_effect_events: EventWriter<MoveDestinationEffectEvent>,
     mut selected_target: ResMut<SelectedTarget>,
     mut ui_requested_cursor: ResMut<UiRequestedCursor>,
-    interface_settings: Res<InterfaceSettings>,
+    config: Res<Config>,
 ) {
     selected_target.hover = None;
     ui_requested_cursor.world_cursor = UiCursorType::Default;
@@ -159,7 +155,7 @@ pub fn game_mouse_input_system(
                     selected_target.hover = Some(hit_entity);
 
                     if mouse_button_input.just_pressed(MouseButton::Left) {
-                        if interface_settings.targeting == TargetingType::SingleClick {
+                        if config.interface.targeting == TargetingType::SingleClick {
                             selected_target.selected = Some(hit_entity);
                         }
 
