@@ -5,11 +5,8 @@ use bevy::{
     math::Vec3Swizzles,
     prelude::{Entity, EventReader, EventWriter, Query, Res, With},
 };
-
-use rose_data::{
-    AmmoIndex, EquipmentIndex, ItemClass, ItemType, SkillBasicCommand, SkillCooldown,
-    SkillTargetFilter, SkillType, VehiclePartIndex,
-};
+use bevy::prelude::{Commands, World};
+use rose_data::{AmmoIndex, EquipmentIndex, ItemClass, ItemType, SkillBasicCommand, SkillCooldown, SkillTargetFilter, SkillType, VehiclePartIndex};
 use rose_game_common::{
     components::{CharacterInfo, Hotbar, HotbarSlot, Inventory, ItemDrop, SkillList, Team},
     messages::client::ClientMessage,
@@ -29,12 +26,12 @@ use crate::{
 pub struct PlayerQuery<'w> {
     _player_character: With<PlayerCharacter>,
 
-    entity: Entity,
+    pub entity: Entity,
 
     bank: Option<&'w Bank>,
     cooldowns: &'w mut Cooldowns,
     hotbar: &'w mut Hotbar,
-    inventory: &'w Inventory,
+    pub inventory: &'w Inventory,
     position: &'w Position,
     skill_list: &'w SkillList,
     team: &'w Team,
@@ -64,6 +61,7 @@ pub fn player_command_system(
     game_connection: Option<Res<GameConnection>>,
     game_data: Res<GameData>,
     selected_target: Res<SelectedTarget>,
+    mut commands: Commands,
 ) {
     let query_player_result = query_player.get_single_mut();
     if query_player_result.is_err() {
@@ -770,6 +768,39 @@ pub fn player_command_system(
                 }
             }
             PlayerCommandEvent::UseHotbar(_, _) => {} // Handled above
+            PlayerCommandEvent::PickupDropItem(item, entity, item_slot) => {
+                if let Some(item_data) =
+                    game_data.items.get_base_item(item.get_item_reference())
+                {
+                    chatbox_events.send(ChatboxEvent::System(format!(
+                        "You have earned {}.",
+                        item_data.name
+                    )));
+                }
+
+                commands.add(move |world: &mut World| {
+                    let mut player = world.entity_mut(entity);
+                    if let Some(mut inventory) = player.get_mut::<Inventory>() {
+                        if let Some(inventory_slot) = inventory.get_item_slot_mut(item_slot)
+                        {
+                            *inventory_slot = Some(item);
+                        }
+                    }
+                });
+            }
+            PlayerCommandEvent::PickupDropMoney(money, entity) => {
+                chatbox_events.send(ChatboxEvent::System(format!(
+                    "You have earned {} Zuly.",
+                    money.0
+                )));
+
+                commands.add(move |world: &mut World| {
+                    let mut player = world.entity_mut(entity);
+                    if let Some(mut inventory) = player.get_mut::<Inventory>() {
+                        inventory.try_add_money(money).ok();
+                    }
+                });
+            }
         }
     }
 }

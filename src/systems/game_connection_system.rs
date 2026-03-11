@@ -7,8 +7,7 @@ use bevy::{
         Mut, NextState, Res, ResMut, State, Transform, Visibility, World,
     },
 };
-
-use rose_data::{AbilityType, EquipmentItem, Item, ItemReference, ItemSlotBehaviour, ItemType, SkillCooldown, SoundDatabase, SoundId, StatusEffectType, GET_ITEM};
+use rose_data::{AbilityType, EquipmentItem, Item, ItemReference, ItemSlotBehaviour, ItemType, SkillCooldown, StatusEffectType};
 use rose_game_common::{
     components::{
         AbilityValues, BasicStatType, BasicStats, CharacterInfo, ClanPoints, DroppedItem,
@@ -42,7 +41,7 @@ use crate::{
     },
     resources::{AppState, ClientEntityList, GameConnection, GameData, WorldRates, WorldTime},
 };
-use crate::ui::UiSoundEvent;
+use crate::events::PlayerCommandEvent;
 
 fn to_next_command(
     command_state: &SpawnCommandState,
@@ -135,7 +134,7 @@ pub fn game_connection_system(
     mut personal_store_events: EventWriter<PersonalStoreEvent>,
     mut quest_trigger_events: EventWriter<QuestTriggerEvent>,
     mut message_box_events: EventWriter<MessageBoxEvent>,
-    mut ui_sound_events: EventWriter<UiSoundEvent>,
+    mut player_command_events: EventWriter<PlayerCommandEvent>,
 ) {
     let Some(game_connection) = game_connection else {
         return;
@@ -1088,43 +1087,12 @@ pub fn game_connection_system(
             }
             Ok(ServerMessage::PickupDropItem { drop_entity_id: _, item_slot, item }) => {
                 if let Some(player_entity) = client_entity_list.player_entity {
-                    ui_sound_events.send(UiSoundEvent::new(SoundId::new(GET_ITEM).unwrap()));
-
-                    if let Some(item_data) =
-                        game_data.items.get_base_item(item.get_item_reference())
-                    {
-                        chatbox_events.send(ChatboxEvent::System(format!(
-                            "You have earned {}.",
-                            item_data.name
-                        )));
-                    }
-
-                    commands.add(move |world: &mut World| {
-                        let mut player = world.entity_mut(player_entity);
-                        if let Some(mut inventory) = player.get_mut::<Inventory>() {
-                            if let Some(inventory_slot) = inventory.get_item_slot_mut(item_slot)
-                            {
-                                *inventory_slot = Some(item);
-                            }
-                        }
-                    });
+                    player_command_events.send(PlayerCommandEvent::PickupDropItem(item, player_entity, item_slot));
                 }
             }
             Ok(ServerMessage::PickupDropMoney { drop_entity_id: _, money }) => {
                 if let Some(player_entity) = client_entity_list.player_entity {
-                    ui_sound_events.send(UiSoundEvent::new(SoundId::new(GET_ITEM).unwrap()));
-
-                    chatbox_events.send(ChatboxEvent::System(format!(
-                        "You have earned {} Zuly.",
-                        money.0
-                    )));
-
-                    commands.add(move |world: &mut World| {
-                        let mut player = world.entity_mut(player_entity);
-                        if let Some(mut inventory) = player.get_mut::<Inventory>() {
-                            inventory.try_add_money(money).ok();
-                        }
-                    });
+                    player_command_events.send(PlayerCommandEvent::PickupDropMoney(money, player_entity));
                 }
             }
             Ok(ServerMessage::PickupDropError { drop_entity_id: _, error }) => match error{
