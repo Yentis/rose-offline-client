@@ -1,3 +1,6 @@
+use crate::components::{
+    COLLISION_FILTER_COLLIDABLE, COLLISION_FILTER_MOVEABLE, COLLISION_GROUP_PHYSICS_TOY,
+};
 use bevy::{
     input::{
         mouse::{MouseMotion, MouseScrollUnit, MouseWheel},
@@ -16,10 +19,9 @@ use bevy_rapier3d::{
     prelude::{Collider, CollisionGroups, QueryFilter},
 };
 use dolly::prelude::{Arm, CameraRig, LeftHanded, Position, Smooth, YawPitch};
-
-use crate::components::{
-    COLLISION_FILTER_COLLIDABLE, COLLISION_FILTER_MOVEABLE, COLLISION_GROUP_PHYSICS_TOY,
-};
+use glam::EulerRot;
+use num_traits::float::FloatCore;
+use num_traits::Float;
 
 #[derive(Component)]
 pub struct OrbitCamera {
@@ -46,7 +48,7 @@ impl OrbitCamera {
             follow_entity,
             follow_offset,
             follow_distance,
-            min_distance: 1.0,
+            min_distance: 3.0,
             max_distance: 1000.0,
             current_distance: Default::default(),
         }
@@ -175,11 +177,17 @@ pub fn orbit_camera_system(
 
     // Rotate with mouse drag
     if right_pressed {
-        let sensitivity = 0.1;
+        let sensitivity = 0.2;
+        // Moving too fast causes a "bounce"
+        let max_degrees = 17.0;
+
+        let degrees_x = (-sensitivity * drag_delta.x).clamp(-max_degrees, max_degrees);
+        let degrees_y = (-sensitivity * drag_delta.y).clamp(-max_degrees, max_degrees);
+
         orbit_camera
             .rig
             .driver_mut::<YawPitch>()
-            .rotate_yaw_pitch(-sensitivity * drag_delta.x, -sensitivity * drag_delta.y);
+            .rotate_yaw_pitch(degrees_x, degrees_y);
     }
 
     // Adjust zoom with mouse wheel
@@ -203,10 +211,15 @@ pub fn orbit_camera_system(
         orbit_camera.rig.driver_mut::<Arm>().offset.z = arm_distance;
     }
 
+    // Prevent camera roll
+    let (_, _, roll) = camera_transform.rotation.to_euler(EulerRot::YXZ);
+
     // Update camera
     let calculated_transform = orbit_camera.rig.update(time.delta_seconds());
+    let (yaw, pitch, _) = calculated_transform.rotation.to_euler(EulerRot::YXZ);
+
     camera_transform.translation = calculated_transform.position;
-    camera_transform.rotation = calculated_transform.rotation;
+    camera_transform.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll);
 }
 
 pub trait Interpolate {
