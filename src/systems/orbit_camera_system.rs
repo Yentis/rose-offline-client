@@ -58,7 +58,6 @@ impl OrbitCamera {
 #[derive(Default)]
 pub struct CameraControlState {
     pub is_dragging: bool,
-    pub saved_cursor_position: Option<Vec2>,
 }
 
 pub fn orbit_camera_system(
@@ -81,13 +80,7 @@ pub fn orbit_camera_system(
         (a, b)
     } else {
         if control_state.is_dragging {
-            // Restore cursor state
-            if let Some(saved_cursor_position) = control_state.saved_cursor_position.take() {
-                window.set_cursor_position(Some(saved_cursor_position));
-            }
-
             window.cursor.grab_mode = CursorGrabMode::None;
-            window.cursor.visible = true;
             control_state.is_dragging = false;
         }
 
@@ -121,21 +114,14 @@ pub fn orbit_camera_system(
             }
 
             if !control_state.is_dragging {
-                window.cursor.grab_mode = CursorGrabMode::Locked;
-                window.cursor.visible = false;
-                control_state.saved_cursor_position = window.cursor_position();
+                window.cursor.grab_mode = CursorGrabMode::Confined;
             }
         }
 
         control_state.is_dragging = true;
     } else {
         if control_state.is_dragging {
-            if let Some(saved_cursor_position) = control_state.saved_cursor_position.take() {
-                window.set_cursor_position(Some(saved_cursor_position));
-            }
-
             window.cursor.grab_mode = CursorGrabMode::None;
-            window.cursor.visible = true;
         }
 
         control_state.is_dragging = false;
