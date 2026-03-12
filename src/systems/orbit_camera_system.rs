@@ -163,7 +163,7 @@ pub fn orbit_camera_system(
 
     // Rotate with mouse drag
     if right_pressed {
-        let sensitivity = 0.2;
+        let sensitivity = 0.25;
         // Moving too fast causes a "bounce"
         let max_degrees = 17.0;
 

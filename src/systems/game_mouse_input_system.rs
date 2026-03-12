@@ -139,7 +139,6 @@ pub fn game_mouse_input_system(
 
                 if hit_zone_object.is_some() {
                     if mouse_button_input.just_pressed(MouseButton::Left) {
-                        // TODO
                         player_command_events.send(PlayerCommandEvent::Move(
                             Position::new(Vec3::new(
                                 hit_position.x * 100.0,

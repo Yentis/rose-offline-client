@@ -2,18 +2,25 @@ use crate::audio::SpatialSound;
 use crate::components::SoundCategory;
 use crate::events::{ClientEntityEvent, PlayerCommandEvent, UseItemEvent};
 use crate::resources::{GameData, SoundCache};
-use crate::systems::player_command_system::PlayerQuery;
 use crate::ui::UiSoundEvent;
 use crate::Config;
 use bevy::asset::AssetServer;
+use bevy::ecs::query::WorldQuery;
 use bevy::prelude::{
     Commands, Entity, EventReader, EventWriter, GlobalTransform, Query, Res, Transform,
 };
 use rose_data::SoundId;
-use rose_game_common::components::{ItemSlot, Npc};
+use rose_game_common::components::{Inventory, ItemSlot, Npc};
 
 const LEVEL_UP: u16 = 16;
 const GET_ITEM: u16 = 531;
+
+#[derive(WorldQuery)]
+#[world_query(mutable)]
+pub struct PlayerQuery<'w> {
+    entity: Entity,
+    inventory: &'w Inventory,
+}
 
 pub fn sound_trigger_system(
     mut commands: Commands,

@@ -1,12 +1,15 @@
 use std::time::Duration;
 
+use bevy::prelude::{Commands, World};
 use bevy::{
     ecs::query::WorldQuery,
     math::Vec3Swizzles,
     prelude::{Entity, EventReader, EventWriter, Query, Res, With},
 };
-use bevy::prelude::{Commands, World};
-use rose_data::{AmmoIndex, EquipmentIndex, ItemClass, ItemType, SkillBasicCommand, SkillCooldown, SkillTargetFilter, SkillType, VehiclePartIndex};
+use rose_data::{
+    AmmoIndex, EquipmentIndex, ItemClass, ItemType, SkillBasicCommand, SkillCooldown,
+    SkillTargetFilter, SkillType, VehiclePartIndex,
+};
 use rose_game_common::{
     components::{CharacterInfo, Hotbar, HotbarSlot, Inventory, ItemDrop, SkillList, Team},
     messages::client::ClientMessage,
@@ -26,12 +29,12 @@ use crate::{
 pub struct PlayerQuery<'w> {
     _player_character: With<PlayerCharacter>,
 
-    pub entity: Entity,
+    entity: Entity,
 
     bank: Option<&'w Bank>,
     cooldowns: &'w mut Cooldowns,
     hotbar: &'w mut Hotbar,
-    pub inventory: &'w Inventory,
+    inventory: &'w Inventory,
     position: &'w Position,
     skill_list: &'w SkillList,
     team: &'w Team,
@@ -769,9 +772,7 @@ pub fn player_command_system(
             }
             PlayerCommandEvent::UseHotbar(_, _) => {} // Handled above
             PlayerCommandEvent::PickupDropItem(item, entity, item_slot) => {
-                if let Some(item_data) =
-                    game_data.items.get_base_item(item.get_item_reference())
-                {
+                if let Some(item_data) = game_data.items.get_base_item(item.get_item_reference()) {
                     chatbox_events.send(ChatboxEvent::System(format!(
                         "You have earned {}.",
                         item_data.name
@@ -781,8 +782,7 @@ pub fn player_command_system(
                 commands.add(move |world: &mut World| {
                     let mut player = world.entity_mut(entity);
                     if let Some(mut inventory) = player.get_mut::<Inventory>() {
-                        if let Some(inventory_slot) = inventory.get_item_slot_mut(item_slot)
-                        {
+                        if let Some(inventory_slot) = inventory.get_item_slot_mut(item_slot) {
                             *inventory_slot = Some(item);
                         }
                     }
