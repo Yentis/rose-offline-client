@@ -13,10 +13,15 @@ use bevy_rapier3d::prelude::{CollisionGroups, QueryFilter, RapierContext};
 
 use rose_game_common::components::{ItemDrop, Team};
 
-use crate::{components::{
-    ClientEntity, ClientEntityType, ColliderParent, PlayerCharacter, Position, ZoneObject,
-    COLLISION_FILTER_CLICKABLE, COLLISION_GROUP_PHYSICS_TOY, COLLISION_GROUP_PLAYER,
-}, events::{MoveDestinationEffectEvent, PlayerCommandEvent}, resources::{SelectedTarget, UiCursorType, UiRequestedCursor, TargetingType}, Config};
+use crate::{
+    components::{
+        ClientEntity, ClientEntityType, ColliderParent, PlayerCharacter, Position, ZoneObject,
+        COLLISION_FILTER_CLICKABLE, COLLISION_GROUP_PHYSICS_TOY, COLLISION_GROUP_PLAYER,
+    },
+    events::{MoveDestinationEffectEvent, PlayerCommandEvent},
+    resources::{SelectedTarget, TargetingType, UiCursorType, UiRequestedCursor},
+    Config,
+};
 
 #[derive(WorldQuery)]
 pub struct PlayerQuery<'w> {
@@ -106,7 +111,16 @@ pub fn game_mouse_input_system(
                             ui_requested_cursor.world_cursor = UiCursorType::User
                         }
                         ClientEntityType::Monster => {
-                            ui_requested_cursor.world_cursor = UiCursorType::Attack
+                            let is_ally = match hit_team {
+                                Some(hit_team) => hit_team.id == player.team.id,
+                                None => false,
+                            };
+
+                            if is_ally {
+                                ui_requested_cursor.world_cursor = UiCursorType::Npc
+                            } else {
+                                ui_requested_cursor.world_cursor = UiCursorType::Attack
+                            }
                         }
                         ClientEntityType::Npc => {
                             ui_requested_cursor.world_cursor = UiCursorType::Npc
@@ -125,6 +139,7 @@ pub fn game_mouse_input_system(
 
                 if hit_zone_object.is_some() {
                     if mouse_button_input.just_pressed(MouseButton::Left) {
+                        // TODO
                         player_command_events.send(PlayerCommandEvent::Move(
                             Position::new(Vec3::new(
                                 hit_position.x * 100.0,
