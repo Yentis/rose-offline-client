@@ -8,6 +8,7 @@ use crate::{
         widgets::{DataBindings, Dialog},
         UiSoundEvent, UiStateWindows,
     },
+    Config,
 };
 
 const IID_BTN_CHAR: i32 = 10;
@@ -35,6 +36,7 @@ pub fn ui_game_menu_system(
     mut ui_sound_events: EventWriter<UiSoundEvent>,
     dialog_assets: Res<Assets<Dialog>>,
     mut exit: EventWriter<AppExit>,
+    mut config: ResMut<Config>,
 ) {
     let dialog = if let Some(dialog) = dialog_assets.get(&ui_resources.dialog_game_menu) {
         dialog
@@ -155,29 +157,27 @@ pub fn ui_game_menu_system(
 
     if !egui_context.ctx_mut().wants_keyboard_input() {
         egui_context.ctx_mut().input_mut(|input| {
-            if input.consume_key(egui::Modifiers::ALT, egui::Key::A) {
+            if input.consume_shortcut(&config.hotkeys.character) {
                 ui_state_windows.character_info_open = !ui_state_windows.character_info_open;
             }
 
-            if input.consume_key(egui::Modifiers::ALT, egui::Key::I)
-                || input.consume_key(egui::Modifiers::ALT, egui::Key::V)
-            {
+            if input.consume_shortcut(&config.hotkeys.inventory) {
                 ui_state_windows.inventory_open = !ui_state_windows.inventory_open;
             }
 
-            if input.consume_key(egui::Modifiers::ALT, egui::Key::N) {
+            if input.consume_shortcut(&config.hotkeys.clan) {
                 ui_state_windows.clan_open = !ui_state_windows.clan_open;
             }
 
-            if input.consume_key(egui::Modifiers::ALT, egui::Key::S) {
+            if input.consume_shortcut(&config.hotkeys.skills) {
                 ui_state_windows.skill_list_open = !ui_state_windows.skill_list_open;
             }
 
-            if input.consume_key(egui::Modifiers::ALT, egui::Key::Q) {
+            if input.consume_shortcut(&config.hotkeys.quests) {
                 ui_state_windows.quest_list_open = !ui_state_windows.quest_list_open;
             }
 
-            if input.consume_key(egui::Modifiers::ALT, egui::Key::O) {
+            if input.consume_shortcut(&config.hotkeys.settings) {
                 ui_state_windows.settings_open = !ui_state_windows.settings_open;
             }
         });
