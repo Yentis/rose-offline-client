@@ -4,7 +4,6 @@ use bevy::{
 };
 use bevy_egui::{egui, EguiContexts};
 use enum_map::{enum_map, EnumMap};
-
 use rose_data::{AmmoIndex, EquipmentIndex, Item, VehiclePartIndex};
 use rose_game_common::components::{
     Equipment, Inventory, InventoryPageType, ItemSlot, INVENTORY_PAGE_SIZE,
@@ -429,22 +428,8 @@ fn ui_add_inventory_slot(
         player_command_events.send(PlayerCommandEvent::DropItem(drop_inventory_slot));
     }
 
-    if let Some((ItemSlot::Inventory(page_a, slot_a), ItemSlot::Inventory(page_b, slot_b))) =
-        swap_inventory_slots
-    {
-        if page_a == page_b {
-            let inventory_map = &mut item_slot_map[page_a];
-            let source_index = inventory_map
-                .iter()
-                .position(|slot| slot == &ItemSlot::Inventory(page_a, slot_a));
-            let destination_index = inventory_map
-                .iter()
-                .position(|slot| slot == &ItemSlot::Inventory(page_b, slot_b));
-            if let (Some(source_index), Some(destination_index)) = (source_index, destination_index)
-            {
-                inventory_map.swap(source_index, destination_index);
-            }
-        }
+    if let Some((slot_a, slot_b)) = swap_inventory_slots {
+        player_command_events.send(PlayerCommandEvent::SwapItem(slot_a, slot_b));
     }
 }
 

@@ -3,6 +3,7 @@ use num_traits::FromPrimitive;
 use std::net::SocketAddr;
 use tokio::net::TcpStream;
 
+use crate::protocol::{ProtocolClient, ProtocolClientError};
 use rose_data::{QuestTriggerHash, SkillId};
 use rose_game_common::{
     components::MoveMode,
@@ -15,6 +16,7 @@ use rose_game_common::{
     },
 };
 use rose_network_common::{Connection, Packet, PacketCodec};
+use rose_network_irose::game_client_packets::PacketClientSwapItem;
 use rose_network_irose::{
     game_client_packets::{
         PacketClientAttack, PacketClientBankMoveItem, PacketClientBankOpen,
@@ -64,8 +66,6 @@ use rose_network_irose::{
     },
     ClientPacketCodec, IROSE_112_TABLE,
 };
-
-use crate::protocol::{ProtocolClient, ProtocolClientError};
 
 pub struct GameClient {
     server_address: SocketAddr,
@@ -1282,6 +1282,11 @@ impl GameClient {
                         item_slot,
                         target_entity_id,
                     }))
+                    .await?
+            }
+            ClientMessage::SwapItem { slot_a, slot_b } => {
+                connection
+                    .write_packet(Packet::from(&PacketClientSwapItem { slot_a, slot_b }))
                     .await?
             }
             ClientMessage::WarpGateRequest { warp_gate_id } => {

@@ -35,7 +35,7 @@ pub fn ui_game_menu_system(
     ui_resources: Res<UiResources>,
     mut ui_sound_events: EventWriter<UiSoundEvent>,
     dialog_assets: Res<Assets<Dialog>>,
-    mut exit: EventWriter<AppExit>,
+    mut exit_events: EventWriter<AppExit>,
     mut config: ResMut<Config>,
 ) {
     let dialog = if let Some(dialog) = dialog_assets.get(&ui_resources.dialog_game_menu) {
@@ -152,7 +152,7 @@ pub fn ui_game_menu_system(
 
     if response_button_exit.map_or(false, |r| r.clicked()) {
         ui_state_windows.menu_open = false;
-        exit.send(AppExit);
+        exit_events.send(AppExit);
     }
 
     if !egui_context.ctx_mut().wants_keyboard_input() {
