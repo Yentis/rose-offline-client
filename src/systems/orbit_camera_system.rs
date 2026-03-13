@@ -163,7 +163,7 @@ pub fn orbit_camera_system(
     if right_pressed {
         let sensitivity = 0.25;
         // Moving too fast causes a "bounce"
-        let max_degrees = 17.0;
+        let max_degrees = 1000.0 * time.delta_seconds();
 
         let degrees_x = (-sensitivity * drag_delta.x).clamp(-max_degrees, max_degrees);
         let degrees_y = (-sensitivity * drag_delta.y).clamp(-max_degrees, max_degrees);
