@@ -3,7 +3,6 @@ use bevy::{
     prelude::{Assets, EventWriter, Local, Query, Res, ResMut, With},
 };
 use bevy_egui::{egui, EguiContexts};
-
 use rose_game_common::{
     components::{
         AbilityValues, BasicStatType, BasicStats, CharacterInfo, ExperiencePoints, Level,
@@ -12,6 +11,7 @@ use rose_game_common::{
     messages::client::ClientMessage,
 };
 
+use crate::ui::tooltips::{add_stat_info_row, KEY_COLOR};
 use crate::{
     components::PlayerCharacter,
     resources::{GameConnection, GameData, UiResources},
@@ -154,27 +154,143 @@ pub fn ui_character_info_system(
                         ui.add_label_at(
                             egui::pos2(58.0, 67.0),
                             &format!("{}", player.ability_values.get_strength()),
-                        );
+                        )
+                        .on_hover_ui_at_pointer(|ui| {
+                            egui::Grid::new("strength_info")
+                                .num_columns(2)
+                                .show(ui, |ui| {
+                                    add_stat_info_row(ui, "Increases maximum HP", "200");
+                                    add_stat_info_row(ui, "Increases defense", "5 + 35");
+                                    add_stat_info_row(ui, "Increases inventory capacity", "600");
+                                    ui.end_row();
+
+                                    ui.colored_label(KEY_COLOR, "Increases Attack Power for:");
+                                    ui.end_row();
+                                    add_stat_info_row(ui, "- One-Hand Weapon", "75");
+                                    add_stat_info_row(ui, "- Two-Hand Weapon", "75");
+                                    add_stat_info_row(ui, "- Dual Swords", "63");
+                                    add_stat_info_row(ui, "- Launcher", "52");
+                                    add_stat_info_row(ui, "- Fist", "50");
+                                    add_stat_info_row(ui, "- Katar", "42");
+                                    add_stat_info_row(ui, "- Magic Staff", "40");
+                                    add_stat_info_row(ui, "- Bow", "20");
+                                    add_stat_info_row(ui, "- Crossbow", "20");
+                                });
+                        });
+
                         ui.add_label_at(
                             egui::pos2(58.0, 88.0),
                             &format!("{}", player.ability_values.get_dexterity()),
-                        );
+                        )
+                        .on_hover_ui_at_pointer(|ui| {
+                            egui::Grid::new("dexterity_info")
+                                .num_columns(2)
+                                .show(ui, |ui| {
+                                    ui.label("Increases movement speed");
+                                    ui.end_row();
+                                    add_stat_info_row(ui, "Increases dodge rate", "190");
+                                    ui.end_row();
+
+                                    ui.colored_label(KEY_COLOR, "Increases Attack Power for:");
+                                    ui.end_row();
+                                    add_stat_info_row(ui, "- Bow", "62");
+                                    add_stat_info_row(ui, "- Crossbow", "62");
+                                    add_stat_info_row(ui, "- Katar", "55");
+                                    add_stat_info_row(ui, "- Dual Swords", "45");
+                                    add_stat_info_row(ui, "- Gun", "40");
+                                    add_stat_info_row(ui, "- Fist", "30");
+                                });
+                        });
+
                         ui.add_label_at(
                             egui::pos2(58.0, 109.0),
                             &format!("{}", player.ability_values.get_intelligence()),
-                        );
+                        )
+                        .on_hover_ui_at_pointer(|ui| {
+                            egui::Grid::new("intelligence_info")
+                                .num_columns(2)
+                                .show(ui, |ui| {
+                                    add_stat_info_row(ui, "Increases maximum MP", "400");
+                                    ui.label("Increases buff power");
+                                    ui.end_row();
+                                    ui.label("Increases magical skill power");
+                                    ui.end_row();
+                                    add_stat_info_row(ui, "Increases magic defense", "5 + 60");
+                                    ui.end_row();
+
+                                    ui.colored_label(KEY_COLOR, "Increases Attack Power for:");
+                                    ui.end_row();
+                                    add_stat_info_row(ui, "- Magic Wand", "60");
+                                    add_stat_info_row(ui, "- Magic Staff", "40");
+                                });
+                        });
+
                         ui.add_label_at(
                             egui::pos2(58.0, 130.0),
                             &format!("{}", player.ability_values.get_concentration()),
-                        );
+                        )
+                        .on_hover_ui_at_pointer(|ui| {
+                            egui::Grid::new("concentration_info")
+                                .num_columns(2)
+                                .show(ui, |ui| {
+                                    add_stat_info_row(ui, "Increases accuracy", "10 + 80");
+                                    ui.label("Increases critical rate");
+                                    ui.end_row();
+                                    add_stat_info_row(ui, "Increases HP recovery rate", "100");
+                                    add_stat_info_row(ui, "Increases MP recovery rate", "100");
+                                    ui.end_row();
+
+                                    ui.colored_label(KEY_COLOR, "Increases Attack Power for:");
+                                    ui.end_row();
+                                    add_stat_info_row(ui, "- Gun", "50");
+                                    add_stat_info_row(ui, "- Launcher", "50");
+                                });
+                        });
+
                         ui.add_label_at(
                             egui::pos2(58.0, 151.0),
                             &format!("{}", player.ability_values.get_charm()),
-                        );
+                        )
+                        .on_hover_ui_at_pointer(|ui| {
+                            egui::Grid::new("charm_info").num_columns(2).show(ui, |ui| {
+                                ui.label("Increases critical defense");
+                                ui.end_row();
+                                ui.label("Increases quest rewards");
+                                ui.end_row();
+                                ui.label("Increases drop rate");
+                                ui.end_row();
+                                ui.label("Decreases monster aggression");
+                                ui.end_row();
+                            });
+                        });
+
                         ui.add_label_at(
                             egui::pos2(58.0, 172.0),
                             &format!("{}", player.ability_values.get_sense()),
-                        );
+                        )
+                        .on_hover_ui_at_pointer(|ui| {
+                            egui::Grid::new("sense_info").num_columns(2).show(ui, |ui| {
+                                ui.label("Increases skill power");
+                                ui.end_row();
+                                ui.label("Increases critical rate");
+                                ui.end_row();
+                                ui.end_row();
+
+                                ui.colored_label(KEY_COLOR, "Increases Attack Power for:");
+                                ui.end_row();
+                                ui.label("- Bow");
+                                ui.end_row();
+                                ui.label("- Crossbow");
+                                ui.end_row();
+                                ui.label("- Gun");
+                                ui.end_row();
+                                ui.label("- Launcher");
+                                ui.end_row();
+                                ui.label("- Magic Wand");
+                                ui.end_row();
+                            });
+                        });
+
                         ui.add_label_at(
                             egui::pos2(69.0, 211.0),
                             &format!("{}", player.stat_points.points),
@@ -231,7 +347,7 @@ pub fn ui_character_info_system(
                 .calculate_basic_stat_increase_cost(player.basic_stats, basic_stat_type)
             {
                 if response
-                    .on_hover_text(format!("Required Points: {}", cost))
+                    .on_hover_text_at_pointer(format!("Required Points: {}", cost))
                     .clicked()
                     && cost <= player.stat_points.points
                 {

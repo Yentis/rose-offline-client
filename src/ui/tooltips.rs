@@ -7,6 +7,7 @@ use bevy_egui::egui;
 use rose_data::{
     AbilityType, BaseItemData, EquipmentItem, Item, ItemClass, ItemGradeData, ItemType, JobId,
     SkillAddAbility, SkillData, SkillId, SkillType, StackableItem, StatusEffectType,
+    CONTINUOUS_ATTACK, MAGIC_ATTACK, NATURAL_MAGIC, WEAPON_ATTACK,
 };
 use rose_game_common::components::{
     AbilityValues, CharacterInfo, Equipment, ExperiencePoints, HealthPoints, Inventory, Level,
@@ -17,6 +18,7 @@ use crate::{bundles::ability_values_get_value, resources::GameData};
 
 const TOOLTIP_MAX_WIDTH: f32 = 300.0;
 const POSITIVE_EFFECT_COLOR: egui::Color32 = egui::Color32::from_rgb(100, 200, 255);
+pub const KEY_COLOR: egui::Color32 = egui::Color32::from_rgb(130, 145, 195);
 
 #[derive(WorldQuery)]
 pub struct PlayerTooltipQuery<'w> {
@@ -51,6 +53,12 @@ pub fn get_item_name_color(item_type: ItemType, item_data: &BaseItemData) -> egu
         },
         _ => egui::Color32::YELLOW,
     }
+}
+
+pub fn add_stat_info_row(ui: &mut egui::Ui, key: &str, value: &str) {
+    ui.label(key);
+    ui.label(format!("{}%", value));
+    ui.end_row();
 }
 
 fn add_equipment_item_name(
@@ -105,7 +113,11 @@ fn add_equipment_item_life_durability(
         add_label_key_value(ui, game_data.client_strings.item_life, &item_life);
 
         let item_durability = format!("{: >3}", equipment_item.durability);
-        add_label_key_value(ui, game_data.client_strings.item_durability, &item_durability);
+        add_label_key_value(
+            ui,
+            game_data.client_strings.item_durability,
+            &item_durability,
+        );
     });
 }
 
@@ -116,23 +128,29 @@ fn add_item_defence(
     grade_data: Option<&ItemGradeData>,
 ) {
     ui.horizontal(|ui| {
-        let defence = item_data.defence + grade_data
-            .map(|grade_data| grade_data.defence as u32)
-            .unwrap_or(0);
+        let defence = item_data.defence
+            + grade_data
+                .map(|grade_data| grade_data.defence as u32)
+                .unwrap_or(0);
 
         add_label_key_value(
             ui,
-            game_data.string_database.get_ability_type(AbilityType::Defence),
+            game_data
+                .string_database
+                .get_ability_type(AbilityType::Defence),
             &defence.to_string(),
         );
 
-        let resistance = item_data.resistance + grade_data
-            .map(|grade_data| grade_data.resistance as u32)
-            .unwrap_or(0);
+        let resistance = item_data.resistance
+            + grade_data
+                .map(|grade_data| grade_data.resistance as u32)
+                .unwrap_or(0);
 
         add_label_key_value(
             ui,
-            game_data.string_database.get_ability_type(AbilityType::Resistance),
+            game_data
+                .string_database
+                .get_ability_type(AbilityType::Resistance),
             &resistance.to_string(),
         );
     });
@@ -293,14 +311,18 @@ fn add_item_equip_requirement(
 }
 
 fn add_item_description(ui: &mut egui::Ui, game_data: &GameData, item_data: &BaseItemData) {
-    add_label_key_value(ui, game_data.client_strings.item_weight, &item_data.weight.to_string());
+    add_label_key_value(
+        ui,
+        game_data.client_strings.item_weight,
+        &item_data.weight.to_string(),
+    );
     ui.label(item_data.description);
 }
 
 fn add_label_key_value(ui: &mut egui::Ui, key: &str, value: &str) {
     ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = 0.0;
-        ui.colored_label(egui::Color32::from_rgb(130, 145, 195), format!("{}: ", key));
+        ui.colored_label(KEY_COLOR, format!("{}: ", key));
         ui.label(value);
     });
 }
@@ -365,7 +387,9 @@ pub fn ui_add_item_tooltip(
                             ui.horizontal(|ui| {
                                 add_label_key_value(
                                     ui,
-                                    game_data.string_database.get_ability_type(AbilityType::Attack),
+                                    game_data
+                                        .string_database
+                                        .get_ability_type(AbilityType::Attack),
                                     &attack_power.to_string(),
                                 );
 
@@ -377,7 +401,9 @@ pub fn ui_add_item_tooltip(
 
                                 add_label_key_value(
                                     ui,
-                                    game_data.string_database.get_ability_type(AbilityType::AttackSpeed),
+                                    game_data
+                                        .string_database
+                                        .get_ability_type(AbilityType::AttackSpeed),
                                     &attack_speed,
                                 );
                             });
@@ -386,13 +412,17 @@ pub fn ui_add_item_tooltip(
                             ui.horizontal(|ui| {
                                 add_label_key_value(
                                     ui,
-                                    game_data.string_database.get_ability_type(AbilityType::Attack),
+                                    game_data
+                                        .string_database
+                                        .get_ability_type(AbilityType::Attack),
                                     &attack_power.to_string(),
                                 );
 
                                 add_label_key_value(
                                     ui,
-                                    game_data.string_database.get_ability_type(AbilityType::AttackSpeed),
+                                    game_data
+                                        .string_database
+                                        .get_ability_type(AbilityType::AttackSpeed),
                                     game_data.client_strings.item_attack_speed_normal,
                                 );
                             });
@@ -401,7 +431,9 @@ pub fn ui_add_item_tooltip(
                             ui.horizontal(|ui| {
                                 add_label_key_value(
                                     ui,
-                                    game_data.string_database.get_ability_type(AbilityType::Attack),
+                                    game_data
+                                        .string_database
+                                        .get_ability_type(AbilityType::Attack),
                                     &attack_power.to_string(),
                                 );
 
@@ -413,7 +445,9 @@ pub fn ui_add_item_tooltip(
 
                                 add_label_key_value(
                                     ui,
-                                    game_data.string_database.get_ability_type(AbilityType::AttackSpeed),
+                                    game_data
+                                        .string_database
+                                        .get_ability_type(AbilityType::AttackSpeed),
                                     &attack_speed,
                                 );
                             });
@@ -421,7 +455,11 @@ pub fn ui_add_item_tooltip(
                     }
 
                     let attack_range = format!("{}m", weapon_item_data.attack_range / 100);
-                    add_label_key_value(ui, game_data.client_strings.item_attack_range, &attack_range);
+                    add_label_key_value(
+                        ui,
+                        game_data.client_strings.item_attack_range,
+                        &attack_range,
+                    );
 
                     add_item_add_ability(ui, game_data, item_data);
                     add_equipment_item_add_appraisal(ui, game_data, equipment_item);
@@ -444,7 +482,9 @@ pub fn ui_add_item_tooltip(
 
                             add_label_key_value(
                                 ui,
-                                game_data.string_database.get_ability_type(AbilityType::Avoid),
+                                game_data
+                                    .string_database
+                                    .get_ability_type(AbilityType::Avoid),
                                 &(avoid_rate as i32).to_string(),
                             );
                         });
@@ -510,7 +550,9 @@ pub fn ui_add_item_tooltip(
 
                             add_label_key_value(
                                 ui,
-                                game_data.string_database.get_ability_type(AbilityType::Avoid),
+                                game_data
+                                    .string_database
+                                    .get_ability_type(AbilityType::Avoid),
                                 &(avoid_rate as i32).to_string(),
                             );
                         });
@@ -530,7 +572,7 @@ pub fn ui_add_item_tooltip(
                                 format!(
                                     "[{} {}]",
                                     game_data.client_strings.item_move_speed, move_speed
-                                )
+                                ),
                             );
                         }
                     } else if matches!(equipment_item.item.item_type, ItemType::Back) {
@@ -544,7 +586,7 @@ pub fn ui_add_item_tooltip(
                                 format!(
                                     "[{} {}]",
                                     game_data.client_strings.item_move_speed, move_speed
-                                )
+                                ),
                             );
                         }
                     }
@@ -799,10 +841,10 @@ fn add_skill_description(ui: &mut egui::Ui, skill_data: &SkillData) {
 
 fn add_skill_power(ui: &mut egui::Ui, game_data: &GameData, skill_data: &SkillData) {
     let damage_type = match skill_data.damage_type {
-        0 => game_data.client_strings.skill_damage_type_0,
-        1 => game_data.client_strings.skill_damage_type_1,
-        2 => game_data.client_strings.skill_damage_type_2,
-        3 => game_data.client_strings.skill_damage_type_3,
+        CONTINUOUS_ATTACK => game_data.client_strings.skill_damage_type_continuous,
+        WEAPON_ATTACK => game_data.client_strings.skill_damage_type_weapon,
+        MAGIC_ATTACK => game_data.client_strings.skill_damage_type_magic,
+        NATURAL_MAGIC => game_data.client_strings.skill_damage_type_natural_magic,
         _ => "",
     };
 
@@ -1115,7 +1157,11 @@ fn add_skill_status_effects(
                     skill_data.success_ratio,
                 );
 
-                add_label_key_value(ui, game_data.client_strings.skill_success_rate, &success_rate);
+                add_label_key_value(
+                    ui,
+                    game_data.client_strings.skill_success_rate,
+                    &success_rate,
+                );
 
                 let duration = format!(
                     "{} {}",
@@ -1146,7 +1192,9 @@ fn add_skill_steal_ability_value(ui: &mut egui::Ui, game_data: &GameData, skill_
         ui.horizontal(|ui| {
             let ability = format!(
                 "{} {}",
-                game_data.string_database.get_ability_type(skill_add_ability.ability_type),
+                game_data
+                    .string_database
+                    .get_ability_type(skill_add_ability.ability_type),
                 skill_add_ability.value,
             );
 
@@ -1173,7 +1221,9 @@ fn add_skill_type(ui: &mut egui::Ui, game_data: &GameData, skill_data: &SkillDat
     add_label_key_value(
         ui,
         game_data.client_strings.skill_type,
-        game_data.string_database.get_skill_type(skill_data.skill_type),
+        game_data
+            .string_database
+            .get_skill_type(skill_data.skill_type),
     );
 }
 
@@ -1181,7 +1231,9 @@ fn add_skill_target(ui: &mut egui::Ui, game_data: &GameData, skill_data: &SkillD
     add_label_key_value(
         ui,
         game_data.client_strings.skill_target,
-        game_data.string_database.get_skill_target_filter(skill_data.target_filter),
+        game_data
+            .string_database
+            .get_skill_target_filter(skill_data.target_filter),
     );
 }
 
