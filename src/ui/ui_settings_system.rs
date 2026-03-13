@@ -2,8 +2,10 @@ use crate::{
     audio::SoundGain, components::SoundCategory, resources::TargetingType, save_config,
     ui::UiStateWindows, Config, GraphicsModeConfig,
 };
-use bevy::prelude::{Local, Query, ResMut};
-use bevy::window::WindowMode;
+use bevy::{
+    prelude::{Local, Query, ResMut},
+    window::WindowMode,
+};
 use bevy_egui::{egui, EguiContexts};
 use egui::{vec2, KeyboardShortcut, Ui};
 use std::path::Path;

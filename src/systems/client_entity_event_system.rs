@@ -1,14 +1,12 @@
-use bevy::prelude::{
-    EventReader, EventWriter, GlobalTransform, Query, Res,
-};
+use bevy::prelude::{EventReader, EventWriter, GlobalTransform, Query, Res};
 
 use rose_file_readers::VfsPathBuf;
 use rose_game_common::components::Npc;
 
 use crate::{
-    components::{PlayerCharacter},
+    components::PlayerCharacter,
     events::{ChatboxEvent, ClientEntityEvent, SpawnEffectData, SpawnEffectEvent},
-    resources::{GameData},
+    resources::GameData,
 };
 
 pub fn client_entity_event_system(

@@ -2,8 +2,6 @@
 #![allow(clippy::too_many_arguments)]
 
 use animation::RoseAnimationPlugin;
-use bevy::prelude::Resource;
-use bevy::render::settings::Backends;
 use bevy::{
     core_pipeline::{bloom::BloomSettings, clear_color::ClearColor},
     ecs::event::Events,
@@ -11,8 +9,8 @@ use bevy::{
     prelude::{
         apply_deferred, in_state, AddAsset, App, AssetServer, Assets, Camera, Camera3dBundle,
         Color, Commands, IntoSystemConfigs, IntoSystemSetConfigs, Msaa, OnEnter, OnExit,
-        PluginGroup, PostStartup, PostUpdate, PreUpdate, Quat, Res, ResMut, Startup, State,
-        SystemSet, Transform, Update, Vec3,
+        PluginGroup, PostStartup, PostUpdate, PreUpdate, Quat, Res, ResMut, Resource, Startup,
+        State, SystemSet, Transform, Update, Vec3,
     },
     render::{render_resource::WgpuFeatures, settings::WgpuSettings},
     transform::TransformSystem,
@@ -52,7 +50,6 @@ pub mod zone_loader;
 
 use crate::ui::init_window_system;
 use audio::OddioPlugin;
-use components::SoundCategory;
 use events::{
     BankEvent, CharacterSelectEvent, ChatboxEvent, ClanDialogEvent, ClientEntityEvent,
     ConversationDialogEvent, GameConnectionEvent, HitEvent, LoadZoneEvent, LoginEvent,

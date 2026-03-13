@@ -2,9 +2,7 @@ use std::time::Duration;
 
 use bevy::{
     ecs::query::WorldQuery,
-    prelude::{
-        Entity, EventReader, EventWriter, GlobalTransform, Query, Res,
-    },
+    prelude::{Entity, EventReader, EventWriter, GlobalTransform, Query, Res},
     time::Time,
 };
 
@@ -12,9 +10,9 @@ use rose_data::ItemType;
 use rose_game_common::components::{StatusEffects, StatusEffectsRegen};
 
 use crate::{
-    components::{PlayerCharacter},
+    components::PlayerCharacter,
     events::{SpawnEffectData, SpawnEffectEvent, UseItemEvent},
-    resources::{GameData},
+    resources::GameData,
 };
 
 #[derive(WorldQuery)]
