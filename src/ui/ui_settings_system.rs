@@ -73,7 +73,7 @@ pub fn ui_settings_system(
                             let mut mode_changed = false;
                             let graphics = &mut config.graphics;
 
-                            ui.label("Screen mode:");
+                            ui.label("Screen mode");
 
                             let mut selected_mode =
                                 if graphics.mode == GraphicsModeConfig::Fullscreen {
@@ -103,7 +103,7 @@ pub fn ui_settings_system(
                                 });
 
                             ui.end_row();
-                            ui.label("Resolution:");
+                            ui.label("Resolution");
 
                             ui.add_enabled_ui(selected_mode == WindowMode::Windowed, |ui| {
                                 egui::ComboBox::from_id_source("resolution")

@@ -1,7 +1,9 @@
 use crate::{Config, GraphicsModeConfig};
-use bevy::prelude::{Entity, NonSend, Query, Res, ResMut, With};
-use bevy::window::{PrimaryWindow, Window, WindowMode};
-use bevy::winit::WinitWindows;
+use bevy::{
+    prelude::{Entity, NonSend, Query, Res, ResMut, With},
+    window::{PrimaryWindow, Window, WindowMode},
+    winit::WinitWindows,
+};
 use std::collections::HashSet;
 
 pub fn init_window_system(
