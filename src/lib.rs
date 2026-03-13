@@ -52,6 +52,7 @@ pub mod zone_loader;
 
 use crate::ui::init_window_system;
 use audio::OddioPlugin;
+use components::SoundCategory;
 use events::{
     BankEvent, CharacterSelectEvent, ChatboxEvent, ClanDialogEvent, ClientEntityEvent,
     ConversationDialogEvent, GameConnectionEvent, HitEvent, LoadZoneEvent, LoginEvent,

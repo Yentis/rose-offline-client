@@ -1,13 +1,15 @@
-use crate::audio::SpatialSound;
-use crate::components::SoundCategory;
-use crate::events::{ClientEntityEvent, PlayerCommandEvent, UseItemEvent};
-use crate::resources::{GameData, SoundCache};
-use crate::ui::UiSoundEvent;
-use crate::Config;
-use bevy::asset::AssetServer;
-use bevy::ecs::query::WorldQuery;
-use bevy::prelude::{
-    Commands, Entity, EventReader, EventWriter, GlobalTransform, Query, Res, Transform,
+use crate::{
+    audio::SpatialSound,
+    components::SoundCategory,
+    events::{ClientEntityEvent, PlayerCommandEvent, UseItemEvent},
+    resources::{GameData, SoundCache},
+    ui::UiSoundEvent,
+    Config,
+};
+use bevy::{
+    asset::AssetServer,
+    ecs::query::WorldQuery,
+    prelude::{Commands, Entity, EventReader, EventWriter, GlobalTransform, Query, Res, Transform},
 };
 use rose_data::SoundId;
 use rose_game_common::components::{Inventory, ItemSlot, Npc};
@@ -32,9 +34,9 @@ pub fn sound_trigger_system(
     query_global_transform: Query<&GlobalTransform>,
     query_npc: Query<(&Npc, &GlobalTransform)>,
     game_data: Res<GameData>,
-    config: Res<Config>,
     sound_cache: Res<SoundCache>,
     asset_server: Res<AssetServer>,
+    config: Res<Config>,
 ) {
     let player = match query_player.get_single_mut() {
         Ok(player) => player,
