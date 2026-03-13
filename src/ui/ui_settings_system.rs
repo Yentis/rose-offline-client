@@ -1,6 +1,10 @@
 use crate::{
-    audio::SoundGain, components::SoundCategory, resources::TargetingType, save_config,
-    ui::UiStateWindows, Config, GraphicsModeConfig,
+    audio::SoundGain,
+    components::{NameTagType, SoundCategory},
+    resources::{NameTagCache, TargetingType},
+    save_config,
+    ui::UiStateWindows,
+    Config, GraphicsModeConfig,
 };
 use bevy::{
     prelude::{Local, Query, ResMut},
@@ -36,6 +40,7 @@ pub fn ui_settings_system(
     mut ui_state_settings: Local<UiStateSettings>,
     mut config: ResMut<Config>,
     mut query_sounds: Query<(&SoundCategory, &mut SoundGain)>,
+    mut name_tag_cache: ResMut<NameTagCache>,
 ) {
     egui::Window::new("Settings")
         .open(&mut ui_state_windows.settings_open)
@@ -153,12 +158,12 @@ pub fn ui_settings_system(
                         .show(ui, |ui| {
                             let mut gain_changed = false;
 
-                            ui.label("Sound:");
+                            ui.label("Sound");
                             save_settings |=
                                 ui.checkbox(&mut config.sound.enabled, "Enabled").changed();
                             ui.end_row();
 
-                            ui.label("Global Volume:");
+                            ui.label("Global Volume");
                             let global_response = ui.add(
                                 egui::Slider::new(&mut config.sound.volume.global, 0.0..=1.0)
                                     .show_value(true),
@@ -179,12 +184,12 @@ pub fn ui_settings_system(
                             };
 
                             let volume = &mut config.sound.volume;
-                            add_category_slider("Background Music:", &mut volume.background_music);
-                            add_category_slider("Player Footsteps:", &mut volume.player_footstep);
-                            add_category_slider("Other Footsteps:", &mut volume.other_footstep);
-                            add_category_slider("Player Combat:", &mut volume.player_combat);
-                            add_category_slider("Other Combat:", &mut volume.other_combat);
-                            add_category_slider("NPC Sounds:", &mut volume.npc_sounds);
+                            add_category_slider("Background Music", &mut volume.background_music);
+                            add_category_slider("Player Footsteps", &mut volume.player_footstep);
+                            add_category_slider("Other Footsteps", &mut volume.other_footstep);
+                            add_category_slider("Player Combat", &mut volume.player_combat);
+                            add_category_slider("Other Combat", &mut volume.other_combat);
+                            add_category_slider("NPC Sounds", &mut volume.npc_sounds);
 
                             if gain_changed || save_settings {
                                 for (category, mut gain) in query_sounds.iter_mut() {
@@ -201,12 +206,12 @@ pub fn ui_settings_system(
                     egui::Grid::new("interface_settings")
                         .num_columns(2)
                         .show(ui, |ui| {
-                            ui.label("Targeting:");
+                            ui.label("Control");
                             save_settings |= ui
                                 .radio_value(
                                     &mut config.interface.targeting,
                                     TargetingType::DoubleClick,
-                                    "1st Click: Target, 2nd Click: Attack",
+                                    "One Click: Target\nDouble Click: Attack",
                                 )
                                 .changed();
                             ui.end_row();
@@ -216,10 +221,47 @@ pub fn ui_settings_system(
                                 .radio_value(
                                     &mut config.interface.targeting,
                                     TargetingType::SingleClick,
-                                    "1 Click: Target & Attack",
+                                    "One Click: Target + Attack",
                                 )
                                 .changed();
                             ui.end_row();
+
+                            ui.end_row();
+                            let mut name_tag_changed = false;
+
+                            ui.label("Info");
+                            name_tag_changed |= ui
+                                .checkbox(
+                                    &mut config.interface.name_tag_settings.show_all
+                                        [NameTagType::Character],
+                                    "Other Player Name",
+                                )
+                                .changed();
+                            ui.end_row();
+
+                            ui.label("");
+                            name_tag_changed |= ui
+                                .checkbox(
+                                    &mut config.interface.name_tag_settings.show_all
+                                        [NameTagType::Npc],
+                                    "NPC Name",
+                                )
+                                .changed();
+                            ui.end_row();
+
+                            ui.label("");
+                            name_tag_changed |= ui
+                                .checkbox(
+                                    &mut config.interface.name_tag_settings.show_all
+                                        [NameTagType::Monster],
+                                    "Monster Name",
+                                )
+                                .changed();
+
+                            if name_tag_changed {
+                                save_settings = true;
+                                name_tag_cache.dispose = true;
+                            }
                         });
                 }
                 SettingsPage::Hotkeys => {

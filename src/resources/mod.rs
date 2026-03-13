@@ -45,6 +45,7 @@ pub use hotkeys_config::HotkeysConfig;
 pub use interface_config::{InterfaceConfig, TargetingType};
 pub use login_connection::LoginConnection;
 pub use login_state::LoginState;
+pub use name_tag_cache::{NameTagCache, NameTagData, NameTagPendingData};
 pub use name_tag_settings::NameTagSettings;
 pub use network_thread::{run_network_thread, NetworkThread, NetworkThreadMessage};
 pub use render_configuration::RenderConfiguration;
