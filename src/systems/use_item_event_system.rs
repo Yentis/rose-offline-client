@@ -30,14 +30,10 @@ pub struct EntityQuery<'w> {
 }
 
 pub fn use_item_event_system(
-    mut commands: Commands,
     mut events: EventReader<UseItemEvent>,
     mut spawn_effect_events: EventWriter<SpawnEffectEvent>,
     mut query: Query<EntityQuery>,
-    asset_server: Res<AssetServer>,
     game_data: Res<GameData>,
-    sound_settings: Res<SoundSettings>,
-    sound_cache: Res<SoundCache>,
     time: Res<Time>,
 ) {
     for UseItemEvent { entity, item } in events.iter() {
@@ -63,25 +59,6 @@ pub fn use_item_event_system(
                 user.entity,
                 None,
                 SpawnEffectData::with_file_id(effect_file_id),
-            ));
-        }
-
-        if let Some(sound_data) = item_data
-            .effect_sound_id
-            .and_then(|id| game_data.sounds.get_sound(id))
-        {
-            let category = if user.is_player.is_some() {
-                SoundCategory::PlayerCombat
-            } else {
-                SoundCategory::OtherCombat
-            };
-
-            commands.spawn((
-                category,
-                sound_settings.gain(category),
-                SpatialSound::new(sound_cache.load(sound_data, &asset_server)),
-                Transform::from_translation(user.global_transform.translation()),
-                GlobalTransform::from_translation(user.global_transform.translation()),
             ));
         }
 
