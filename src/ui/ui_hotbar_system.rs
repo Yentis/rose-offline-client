@@ -1,6 +1,5 @@
 use bevy::{
-    ecs::query::WorldQuery
-    ,
+    ecs::query::WorldQuery,
     prelude::{Assets, EventWriter, Local, Query, Res, ResMut, With},
 };
 use bevy_egui::{egui, EguiContexts};
@@ -208,7 +207,7 @@ pub fn ui_hotbar_system(
     game_data: Res<GameData>,
     ui_resources: Res<UiResources>,
     dialog_assets: Res<Assets<Dialog>>,
-    mut config: ResMut<Config>,
+    config: Res<Config>,
 ) {
     let ui_state_hot_bar = &mut *ui_state_hot_bar;
     let dialog = if let Some(dialog) = ui_state_hot_bar

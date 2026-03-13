@@ -20,8 +20,6 @@ use bevy_rapier3d::{
 };
 use dolly::prelude::{Arm, CameraRig, LeftHanded, Position, Smooth, YawPitch};
 use glam::EulerRot;
-use num_traits::float::FloatCore;
-use num_traits::Float;
 
 #[derive(Component)]
 pub struct OrbitCamera {

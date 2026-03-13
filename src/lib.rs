@@ -20,7 +20,6 @@ use bevy::{
 };
 use bevy_egui::{egui, EguiContexts, EguiSet};
 use bevy_rapier3d::plugin::PhysicsSet;
-use enum_map::enum_map;
 use exe_resource_loader::{ExeResourceCursor, ExeResourceLoader};
 use rose_data::{CharacterMotionDatabaseOptions, NpcDatabaseOptions, ZoneId};
 use rose_file_readers::{
@@ -28,7 +27,6 @@ use rose_file_readers::{
     VirtualFilesystem, VirtualFilesystemDevice, ZscFile,
 };
 use serde::{Deserialize, Serialize};
-use std::fmt::Error;
 use std::{
     path::{Path, PathBuf},
     sync::Arc,
@@ -52,8 +50,6 @@ pub mod vfs_asset_io;
 pub mod zms_asset_loader;
 pub mod zone_loader;
 
-use crate::audio::SoundGain;
-use crate::components::SoundCategory;
 use crate::ui::init_window_system;
 use audio::OddioPlugin;
 use events::{
@@ -70,8 +66,8 @@ use resources::{
     load_ui_resources, run_network_thread, ui_requested_cursor_apply_system, update_ui_resources,
     AppState, ClientEntityList, DamageDigitsSpawner, DebugRenderConfig, GameData, HotkeysConfig,
     InterfaceConfig, NameTagSettings, NetworkThread, NetworkThreadMessage, RenderConfiguration,
-    SelectedTarget, ServerConfiguration, SoundCache, SoundConfig, SpecularTexture, TargetingType,
-    VfsResource, WorldTime, ZoneTime,
+    SelectedTarget, ServerConfiguration, SoundCache, SoundConfig, SpecularTexture, VfsResource,
+    WorldTime, ZoneTime,
 };
 use scripting::RoseScriptingPlugin;
 use systems::{
