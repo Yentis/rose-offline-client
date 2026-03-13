@@ -47,7 +47,7 @@ impl OrbitCamera {
             follow_offset,
             follow_distance,
             min_distance: 3.0,
-            max_distance: 1000.0,
+            max_distance: 50.0,
             current_distance: Default::default(),
         }
     }
@@ -161,7 +161,7 @@ pub fn orbit_camera_system(
 
     // Rotate with mouse drag
     if right_pressed {
-        let sensitivity = 0.25;
+        let sensitivity = 0.3;
         // Moving too fast causes a "bounce"
         let max_degrees = 1000.0 * time.delta_seconds();
 
