@@ -304,55 +304,23 @@ pub fn ui_settings_system(
                                     ui.end_row();
                                 };
 
-                            add_shortcut_setting(ui, "Inventory:", &mut config.hotkeys.inventory);
-                            add_shortcut_setting(ui, "Skills:", &mut config.hotkeys.skills);
-                            add_shortcut_setting(ui, "Character:", &mut config.hotkeys.character);
-                            add_shortcut_setting(ui, "Quest Log:", &mut config.hotkeys.quests);
-                            add_shortcut_setting(ui, "Clan:", &mut config.hotkeys.clan);
-                            add_shortcut_setting(ui, "Settings:", &mut config.hotkeys.settings);
+                            add_shortcut_setting(ui, "Inventory", &mut config.hotkeys.inventory);
+                            add_shortcut_setting(ui, "Skills", &mut config.hotkeys.skills);
+                            add_shortcut_setting(ui, "Character", &mut config.hotkeys.character);
+                            add_shortcut_setting(ui, "Quest Log", &mut config.hotkeys.quests);
+                            add_shortcut_setting(ui, "Clan", &mut config.hotkeys.clan);
+                            add_shortcut_setting(ui, "Settings", &mut config.hotkeys.settings);
 
                             ui.end_row();
 
-                            add_shortcut_setting(
-                                ui,
-                                "Hotbar Slot 1:",
-                                &mut config.hotkeys.hotbar_1,
-                            );
-                            add_shortcut_setting(
-                                ui,
-                                "Hotbar Slot 2:",
-                                &mut config.hotkeys.hotbar_2,
-                            );
-                            add_shortcut_setting(
-                                ui,
-                                "Hotbar Slot 3:",
-                                &mut config.hotkeys.hotbar_3,
-                            );
-                            add_shortcut_setting(
-                                ui,
-                                "Hotbar Slot 4:",
-                                &mut config.hotkeys.hotbar_4,
-                            );
-                            add_shortcut_setting(
-                                ui,
-                                "Hotbar Slot 5:",
-                                &mut config.hotkeys.hotbar_5,
-                            );
-                            add_shortcut_setting(
-                                ui,
-                                "Hotbar Slot 6:",
-                                &mut config.hotkeys.hotbar_6,
-                            );
-                            add_shortcut_setting(
-                                ui,
-                                "Hotbar Slot 7:",
-                                &mut config.hotkeys.hotbar_7,
-                            );
-                            add_shortcut_setting(
-                                ui,
-                                "Hotbar Slot 8:",
-                                &mut config.hotkeys.hotbar_8,
-                            );
+                            add_shortcut_setting(ui, "Hotbar Slot 1", &mut config.hotkeys.hotbar_1);
+                            add_shortcut_setting(ui, "Hotbar Slot 2", &mut config.hotkeys.hotbar_2);
+                            add_shortcut_setting(ui, "Hotbar Slot 3", &mut config.hotkeys.hotbar_3);
+                            add_shortcut_setting(ui, "Hotbar Slot 4", &mut config.hotkeys.hotbar_4);
+                            add_shortcut_setting(ui, "Hotbar Slot 5", &mut config.hotkeys.hotbar_5);
+                            add_shortcut_setting(ui, "Hotbar Slot 6", &mut config.hotkeys.hotbar_6);
+                            add_shortcut_setting(ui, "Hotbar Slot 7", &mut config.hotkeys.hotbar_7);
+                            add_shortcut_setting(ui, "Hotbar Slot 8", &mut config.hotkeys.hotbar_8);
                         });
                 }
             };
