@@ -221,7 +221,6 @@ fn ui_add_inventory_slot(
     player_tooltip_data: Option<&PlayerTooltipQueryItem>,
     game_data: &GameData,
     ui_resources: &UiResources,
-    item_slot_map: &mut EnumMap<InventoryPageType, Vec<ItemSlot>>,
     ui_state_dnd: &mut UiStateDragAndDrop,
     player_command_events: &mut EventWriter<PlayerCommandEvent>,
 ) {
@@ -532,7 +531,6 @@ pub fn ui_inventory_system(
                                         player_tooltip_data.as_ref(),
                                         &game_data,
                                         &ui_resources,
-                                        &mut ui_state_inventory.item_slot_map,
                                         &mut ui_state_dnd,
                                         &mut player_command_events,
                                     );
@@ -563,7 +561,6 @@ pub fn ui_inventory_system(
                                         player_tooltip_data.as_ref(),
                                         &game_data,
                                         &ui_resources,
-                                        &mut ui_state_inventory.item_slot_map,
                                         &mut ui_state_dnd,
                                         &mut player_command_events,
                                     );
@@ -597,7 +594,6 @@ pub fn ui_inventory_system(
                                 player_tooltip_data.as_ref(),
                                 &game_data,
                                 &ui_resources,
-                                &mut ui_state_inventory.item_slot_map,
                                 &mut ui_state_dnd,
                                 &mut player_command_events,
                             );
