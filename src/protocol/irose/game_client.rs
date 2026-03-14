@@ -16,7 +16,6 @@ use rose_game_common::{
     },
 };
 use rose_network_common::{Connection, Packet, PacketCodec};
-use rose_network_irose::game_client_packets::PacketClientSwapItem;
 use rose_network_irose::{
     game_client_packets::{
         PacketClientAttack, PacketClientBankMoveItem, PacketClientBankOpen,
@@ -1282,11 +1281,6 @@ impl GameClient {
                         item_slot,
                         target_entity_id,
                     }))
-                    .await?
-            }
-            ClientMessage::SwapItem { slot_a, slot_b } => {
-                connection
-                    .write_packet(Packet::from(&PacketClientSwapItem { slot_a, slot_b }))
                     .await?
             }
             ClientMessage::WarpGateRequest { warp_gate_id } => {

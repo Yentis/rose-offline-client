@@ -10,7 +10,6 @@ pub enum PlayerCommandEvent {
     UseSkill(SkillSlot),
     DropItem(ItemSlot),
     UseItem(ItemSlot),
-    SwapItem(ItemSlot, ItemSlot),
     UseHotbar(usize, usize),
     SetHotbar(usize, usize, Option<HotbarSlot>),
     Attack(Entity),

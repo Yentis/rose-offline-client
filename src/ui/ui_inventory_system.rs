@@ -3,16 +3,17 @@ use bevy::{
     prelude::{Assets, EventWriter, Events, Local, Query, Res, ResMut, With, World},
 };
 use bevy_egui::{egui, EguiContexts};
-use enum_map::{enum_map, EnumMap};
 use rose_data::{AmmoIndex, EquipmentIndex, Item, VehiclePartIndex};
 use rose_game_common::components::{
-    Equipment, Inventory, InventoryPageType, ItemSlot, INVENTORY_PAGE_SIZE,
+    CharacterInfo, Equipment, Inventory, InventoryPageType, ItemSlot,
 };
+use std::path::Path;
 
 use crate::{
     components::{Cooldowns, PlayerCharacter},
     events::{NumberInputDialogEvent, PlayerCommandEvent},
     resources::{GameData, UiResources},
+    save_config,
     ui::{
         tooltips::{PlayerTooltipQuery, PlayerTooltipQueryItem},
         ui_add_item_tooltip,
@@ -20,6 +21,7 @@ use crate::{
         DialogInstance, DragAndDropId, DragAndDropSlot, UiSoundEvent, UiStateDragAndDrop,
         UiStateWindows,
     },
+    Config,
 };
 
 const IID_BTN_CLOSE: i32 = 10;
@@ -46,7 +48,6 @@ const IID_PANE_INVEN: i32 = 300;
 
 pub struct UiStateInventory {
     dialog_instance: DialogInstance,
-    item_slot_map: EnumMap<InventoryPageType, Vec<ItemSlot>>,
     current_equipment_tab: i32,
     current_vehicle_tab: i32,
     current_inventory_tab: i32,
@@ -57,11 +58,6 @@ impl Default for UiStateInventory {
     fn default() -> Self {
         Self {
             dialog_instance: DialogInstance::new("DLGITEM.XML"),
-            item_slot_map: enum_map! {
-                page_type => (0..INVENTORY_PAGE_SIZE)
-                .map(|index| ItemSlot::Inventory(page_type, index))
-                .collect(),
-            },
             current_equipment_tab: IID_TAB_EQUIP_AVATAR,
             current_vehicle_tab: IID_TAB_INVEN_PAT,
             current_inventory_tab: IID_TAB_INVEN_EQUIP,
@@ -70,7 +66,7 @@ impl Default for UiStateInventory {
     }
 }
 
-const EQUIPMENT_GRID_SLOTS: [(rose_game_common::components::ItemSlot, egui::Pos2); 14] = [
+const EQUIPMENT_GRID_SLOTS: [(ItemSlot, egui::Pos2); 14] = [
     (
         ItemSlot::Equipment(EquipmentIndex::Face),
         egui::pos2(19.0, 67.0),
@@ -223,6 +219,7 @@ fn ui_add_inventory_slot(
     ui_resources: &UiResources,
     ui_state_dnd: &mut UiStateDragAndDrop,
     player_command_events: &mut EventWriter<PlayerCommandEvent>,
+    config: &mut Config,
 ) {
     let drag_accepts = match inventory_slot {
         ItemSlot::Inventory(page_type, _) => match page_type {
@@ -427,13 +424,33 @@ fn ui_add_inventory_slot(
         player_command_events.send(PlayerCommandEvent::DropItem(drop_inventory_slot));
     }
 
-    if let Some((slot_a, slot_b)) = swap_inventory_slots {
-        player_command_events.send(PlayerCommandEvent::SwapItem(slot_a, slot_b));
+    if let Some((ItemSlot::Inventory(page_a, slot_a), ItemSlot::Inventory(page_b, slot_b))) =
+        swap_inventory_slots
+    {
+        if page_a == page_b {
+            let inventory_map =
+                config.get_inventory_slots(player.character_info.name.clone(), page_a);
+
+            let source_index = inventory_map
+                .iter()
+                .position(|slot| slot == &(page_a, slot_a));
+            let destination_index = inventory_map
+                .iter()
+                .position(|slot| slot == &(page_b, slot_b));
+            if let (Some(source_index), Some(destination_index)) = (source_index, destination_index)
+            {
+                inventory_map.swap(source_index, destination_index);
+
+                let path = config.filesystem.config_path.clone();
+                save_config(config, Path::new(&path));
+            }
+        }
     }
 }
 
 #[derive(WorldQuery)]
 pub struct PlayerQuery<'w> {
+    character_info: &'w CharacterInfo,
     equipment: &'w Equipment,
     inventory: &'w Inventory,
     cooldowns: &'w Cooldowns,
@@ -450,6 +467,7 @@ pub fn ui_inventory_system(
     dialog_assets: Res<Assets<Dialog>>,
     game_data: Res<GameData>,
     ui_resources: Res<UiResources>,
+    mut config: ResMut<Config>,
     mut player_command_events: EventWriter<PlayerCommandEvent>,
     mut number_input_dialog_events: EventWriter<NumberInputDialogEvent>,
 ) {
@@ -533,6 +551,7 @@ pub fn ui_inventory_system(
                                         &ui_resources,
                                         &mut ui_state_dnd,
                                         &mut player_command_events,
+                                        &mut config,
                                     );
                                 }
                             }
@@ -563,6 +582,7 @@ pub fn ui_inventory_system(
                                         &ui_resources,
                                         &mut ui_state_dnd,
                                         &mut player_command_events,
+                                        &mut config,
                                     );
                                 }
                             }
@@ -580,12 +600,15 @@ pub fn ui_inventory_system(
 
                     for row in 0..6 {
                         for column in 0..5 {
-                            let inventory_slot =
-                                ui_state_inventory.item_slot_map[current_page][column + row * 5];
+                            let page_slots = config.get_inventory_slots(
+                                player.character_info.name.clone(),
+                                current_page,
+                            );
+                            let (page_type, index) = page_slots[column + row * 5];
 
                             ui_add_inventory_slot(
                                 ui,
-                                inventory_slot,
+                                ItemSlot::Inventory(page_type, index),
                                 egui::pos2(
                                     12.0 + column as f32 * 41.0,
                                     y_start + row as f32 * 41.0,
@@ -596,6 +619,7 @@ pub fn ui_inventory_system(
                                 &ui_resources,
                                 &mut ui_state_dnd,
                                 &mut player_command_events,
+                                &mut config,
                             );
                         }
 

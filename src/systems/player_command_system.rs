@@ -524,14 +524,6 @@ pub fn player_command_system(
                     }
                 }
             }
-            PlayerCommandEvent::SwapItem(slot_a, slot_b) => {
-                if let Some(game_connection) = game_connection.as_ref() {
-                    game_connection
-                        .client_message_tx
-                        .send(ClientMessage::SwapItem { slot_a, slot_b })
-                        .ok();
-                }
-            }
             PlayerCommandEvent::EquipAmmo(item_slot) => {
                 if let Some(item) = player.inventory.get_item(item_slot) {
                     let ammo_index = if let Some(item_data) =
