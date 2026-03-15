@@ -24,14 +24,15 @@ use rose_network_irose::{
         PacketClientChangeVehiclePart, PacketClientChat, PacketClientClanCommand,
         PacketClientConnectRequest, PacketClientCraftItem, PacketClientDropItemFromInventory,
         PacketClientEmote, PacketClientIncreaseBasicStat, PacketClientJoinZone,
-        PacketClientLevelUpSkill, PacketClientMove, PacketClientMoveCollision,
-        PacketClientMoveToggle, PacketClientMoveToggleType, PacketClientNpcStoreTransaction,
-        PacketClientPartyReply, PacketClientPartyRequest, PacketClientPartyUpdateRules,
-        PacketClientPersonalStoreBuyItem, PacketClientPersonalStoreListItems,
-        PacketClientPickupItemDrop, PacketClientQuestRequest, PacketClientQuestRequestType,
-        PacketClientRepairItemUsingItem, PacketClientRepairItemUsingNpc, PacketClientReviveRequest,
-        PacketClientSetHotbarSlot, PacketClientSetReviveZone, PacketClientUseItem,
-        PacketClientWarpGateRequest,
+        PacketClientLevelUpSkill, PacketClientLogoutRequest, PacketClientMove,
+        PacketClientMoveCollision, PacketClientMoveToggle, PacketClientMoveToggleType,
+        PacketClientNpcStoreTransaction, PacketClientPartyReply, PacketClientPartyRequest,
+        PacketClientPartyUpdateRules, PacketClientPersonalStoreBuyItem,
+        PacketClientPersonalStoreListItems, PacketClientPickupItemDrop, PacketClientQuestRequest,
+        PacketClientQuestRequestType, PacketClientRepairItemUsingItem,
+        PacketClientRepairItemUsingNpc, PacketClientReturnToCharacterSelect,
+        PacketClientReviveRequest, PacketClientSetHotbarSlot, PacketClientSetReviveZone,
+        PacketClientUseItem, PacketClientWarpGateRequest,
     },
     game_server_packets::{
         ConnectResult, PacketConnectionReply, PacketServerAdjustPosition, PacketServerAnnounceChat,
@@ -1577,6 +1578,16 @@ impl GameClient {
                         npc_entity_id,
                         item_slot,
                     }))
+                    .await?;
+            }
+            ClientMessage::ReturnToCharacterSelect => {
+                connection
+                    .write_packet(Packet::from(&PacketClientReturnToCharacterSelect))
+                    .await?;
+            }
+            ClientMessage::Logout => {
+                connection
+                    .write_packet(Packet::from(&PacketClientLogoutRequest))
                     .await?;
             }
             unimplemented => {

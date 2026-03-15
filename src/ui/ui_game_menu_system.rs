@@ -1,4 +1,3 @@
-use bevy::app::AppExit;
 use bevy::prelude::{Assets, EventWriter, Res, ResMut};
 use bevy_egui::{egui, EguiContexts};
 
@@ -28,7 +27,6 @@ pub fn ui_game_menu_system(
     ui_resources: Res<UiResources>,
     mut ui_sound_events: EventWriter<UiSoundEvent>,
     dialog_assets: Res<Assets<Dialog>>,
-    mut exit_events: EventWriter<AppExit>,
     config: Res<Config>,
 ) {
     let dialog = if let Some(dialog) = dialog_assets.get(&ui_resources.dialog_game_menu) {
@@ -116,7 +114,7 @@ pub fn ui_game_menu_system(
     }
 
     if response_button_exit.map_or(false, |r| r.clicked()) {
-        exit_events.send(AppExit);
+        ui_state_windows.exit_open = !ui_state_windows.exit_open;
     }
 
     if !egui_context.ctx_mut().wants_keyboard_input() {
@@ -143,6 +141,10 @@ pub fn ui_game_menu_system(
 
             if input.consume_shortcut(&config.hotkeys.settings) {
                 ui_state_windows.settings_open = !ui_state_windows.settings_open;
+            }
+
+            if input.consume_shortcut(&config.hotkeys.exit) {
+                ui_state_windows.exit_open = !ui_state_windows.exit_open;
             }
         });
     }
