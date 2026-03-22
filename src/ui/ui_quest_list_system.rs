@@ -1,5 +1,3 @@
-use bevy::prelude::{Assets, EventWriter, Local, Query, Res, ResMut, With};
-use bevy_egui::{egui, EguiContexts};
 use std::time::Duration;
 
 use rose_data::Item;
@@ -8,6 +6,7 @@ use rose_game_common::components::QuestState;
 use super::DialogInstance;
 use crate::{
     components::PlayerCharacter,
+    events::{MessageBoxEvent, PlayerCommandEvent},
     resources::{GameData, UiResources, WorldTime},
     ui::{
         tooltips::{PlayerTooltipQuery, PlayerTooltipQueryItem},
@@ -16,6 +15,8 @@ use crate::{
         DragAndDropId, DragAndDropSlot, UiSoundEvent, UiStateWindows,
     },
 };
+use bevy::prelude::{Assets, EventWriter, Events, Local, Query, Res, ResMut, With, World};
+use bevy_egui::{egui, EguiContexts};
 
 const IID_BTN_DELETE: i32 = 50;
 const IID_BTN_CLOSE: i32 = 10;
@@ -300,15 +301,15 @@ pub fn ui_quest_list_system(
                                 Some(game_data.client_strings.timeout.to_string())
                             } else {
                                 let total_seconds = selected_quest
-                            .expire_time
-                            .map(|it| it - world_time.ticks)
+                                    .expire_time
+                                    .map(|it| it - world_time.ticks)
                                     .map(|it| Duration::from(it) - world_time.time_since_last_tick)
                                     .map(|it| it.as_secs())
                                     .unwrap_or(0);
 
-                            let hours = total_seconds / 3600;
-                            let minutes = (total_seconds % 3600) / 60;
-                            let seconds = total_seconds % 60;
+                                let hours = total_seconds / 3600;
+                                let minutes = (total_seconds % 3600) / 60;
+                                let seconds = total_seconds % 60;
 
                                 Some(format!("{:02}:{:02}:{:02}", hours, minutes, seconds))
                             }
@@ -327,6 +328,36 @@ pub fn ui_quest_list_system(
                 },
             );
         });
+
+    if response_delete_button.map_or(false, |it| it.clicked()) {
+        if let Some(selected_quest_data) = selected_quest_data {
+            let quest_id = selected_quest_data.id;
+
+            let message = game_data
+                .client_strings
+                .quest_delete_confirm(selected_quest_data.name);
+
+            message_box_events.send(MessageBoxEvent::Show {
+                message,
+                modal: false,
+                ok: Some(Box::new(move |commands| {
+                    commands.add(move |world: &mut World| {
+                        let Some(mut player_command_events) =
+                            world.get_resource_mut::<Events<PlayerCommandEvent>>()
+                        else {
+                            return;
+                        };
+
+                        player_command_events.send(PlayerCommandEvent::QuestDelete(
+                            selected_index as usize,
+                            quest_id,
+                        ));
+                    });
+                })),
+                cancel: Some(Box::new(|_| {})),
+            });
+        }
+    }
 
     if response_close_button.map_or(false, |r| r.clicked()) {
         ui_state_windows.quest_list_open = false;
