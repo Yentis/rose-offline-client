@@ -233,7 +233,7 @@ pub fn ui_quest_list_system(
                     ],
                     ..Default::default()
                 },
-                |ui, bindings| {
+                |ui, _bindings| {
                     if let Some(selected_quest) = selected_quest {
                         let rect_info = if let Some(Widget::Pane(pane)) =
                             dialog.get_widget(IID_PANE_QUESTINFO)
