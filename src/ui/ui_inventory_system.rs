@@ -339,7 +339,13 @@ fn ui_add_inventory_slot(
         });
 
         response.on_hover_ui(|ui| {
-            ui_add_item_tooltip(ui, game_data, player_tooltip_data, &item);
+            ui_add_item_tooltip(
+                ui,
+                game_data,
+                player_tooltip_data,
+                &item,
+                Some(&inventory_slot),
+            );
         });
     }
 

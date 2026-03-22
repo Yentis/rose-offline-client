@@ -3,7 +3,8 @@ use bevy::{
     prelude::{Assets, EventWriter, Local, Query, Res, ResMut, With},
 };
 use bevy_egui::{egui, EguiContexts};
-
+use egui::{Key, Modifiers};
+use rose_data::{SkillId, SkillIds};
 use rose_game_common::components::{
     Equipment, Hotbar, HotbarSlot, Inventory, SkillList, HOTBAR_NUM_PAGES, HOTBAR_PAGE_SIZE,
 };
@@ -141,7 +142,7 @@ fn ui_add_hotbar_slot(
         response.on_hover_ui(|ui| match hotbar_slot {
             Some(HotbarSlot::Inventory(item_slot)) => {
                 if let Some(item) = (player.equipment, player.inventory).get_item(*item_slot) {
-                    ui_add_item_tooltip(ui, game_data, player_tooltip_data, &item);
+                    ui_add_item_tooltip(ui, game_data, player_tooltip_data, &item, None);
                 }
             }
             Some(HotbarSlot::Skill(skill_slot)) => {
@@ -228,6 +229,15 @@ pub fn ui_hotbar_system(
 
     let use_hotbar_index = if !egui_context.ctx_mut().wants_keyboard_input() {
         egui_context.ctx_mut().input_mut(|input| {
+            if input.consume_key(Modifiers::NONE, Key::Space) {
+                if let Some(slot) = player
+                    .skill_list
+                    .find_skill(&SkillId::new(SkillIds::Jump as u16).unwrap())
+                {
+                    player_command_events.send(PlayerCommandEvent::UseSkill(slot));
+                }
+            }
+
             if input.consume_shortcut(&config.hotkeys.hotbar_1) {
                 Some(0)
             } else if input.consume_shortcut(&config.hotkeys.hotbar_2) {

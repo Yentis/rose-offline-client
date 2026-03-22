@@ -12,7 +12,10 @@ use bevy::{
         OnTransition, PluginGroup, PostStartup, PostUpdate, PreUpdate, Quat, Res, ResMut, Resource,
         Startup, State, SystemSet, Transform, Update, Vec3,
     },
-    render::{render_resource::WgpuFeatures, settings::WgpuSettings},
+    render::{
+        render_resource::WgpuFeatures,
+        settings::{Backends, WgpuSettings},
+    },
     transform::TransformSystem,
     window::{Window, WindowMode},
 };
@@ -94,7 +97,8 @@ use systems::{
     sound_trigger_system, spawn_effect_system, spawn_projectile_system, status_effect_system,
     system_func_event_system, update_position_system, use_item_event_system, vehicle_model_system,
     vehicle_sound_system, visible_status_effects_system, world_connection_system,
-    world_time_system, zone_time_system, zone_viewer_enter_system, DebugInspectorPlugin,
+    world_time_system, zone_collider_scale_fix_system, zone_time_system, zone_viewer_enter_system,
+    DebugInspectorPlugin,
 };
 use ui::{
     init_window_system, load_dialog_sprites_system, ui_bank_system, ui_character_create_system,
@@ -495,7 +499,7 @@ fn run_client(config: &Config, app_state: AppState, mut systems_config: SystemsC
                 .set(bevy::render::RenderPlugin {
                     wgpu_settings: WgpuSettings {
                         features: WgpuFeatures::TEXTURE_COMPRESSION_BC,
-                        // backends: Some(Backends::DX12),
+                        backends: Some(Backends::VULKAN),
                         ..Default::default()
                     },
                 })
@@ -749,6 +753,7 @@ fn run_client(config: &Config, app_state: AppState, mut systems_config: SystemsC
     // character_model_blink_system in PostUpdate to avoid any conflicts with model destruction
     // e.g. through the character select exit system.
     app.add_systems(PostUpdate, character_model_blink_system);
+    app.add_systems(PostUpdate, zone_collider_scale_fix_system);
 
     // vehicle_model_system in after ::Update but before ::PostUpdate to avoid any conflicts,
     // with model destruction but to also be before global transform is calculated.
@@ -1109,12 +1114,12 @@ fn load_game_data_irose(
         data_decoder: rose_data_irose::get_data_decoder(),
         effect_database: rose_data_irose::get_effect_database(&vfs_resource.vfs)
             .expect("Failed to load effect database"),
-        items,
+        items: items.clone(),
         job_class: Arc::new(
             rose_data_irose::get_job_class_database(&vfs_resource.vfs, string_database.clone())
                 .expect("Failed to load job class database"),
         ),
-        npcs,
+        npcs: npcs.clone(),
         quests: Arc::new(
             rose_data_irose::get_quest_database(&vfs_resource.vfs, string_database.clone())
                 .expect("Failed to load quest database"),
@@ -1162,6 +1167,12 @@ fn load_game_data_irose(
                 .with_rotation(Quat::from_xyzw(0.0, 1.0, 0.0, 0.0))
                 .with_scale(Vec3::new(1.5, 1.5, 1.5)),
         ],
+        drop_table: rose_game_irose::data::get_drop_table(
+            vfs_resource.vfs.as_ref(),
+            items.clone(),
+            npcs.clone(),
+        )
+        .expect("Failed to load drop table"),
     });
 }
 

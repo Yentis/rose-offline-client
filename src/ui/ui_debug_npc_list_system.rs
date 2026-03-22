@@ -11,7 +11,7 @@ use rose_game_common::{
 
 use crate::{
     resources::{AppState, GameConnection, GameData},
-    ui::UiStateDebugWindows,
+    ui::{tooltips::get_monster_drops, UiStateDebugWindows},
 };
 
 #[derive(Debug, PartialEq, Eq)]
@@ -180,7 +180,11 @@ pub fn ui_debug_npc_list_system(
                                 });
 
                                 row.col(|ui| {
-                                    ui.label(npc_data.name);
+                                    ui.label(npc_data.name).on_hover_ui(|ui| {
+                                        for item in get_monster_drops(npc_data, &game_data).iter() {
+                                            ui.label(item);
+                                        }
+                                    });
                                 });
 
                                 row.col(|ui| {

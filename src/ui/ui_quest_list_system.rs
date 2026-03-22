@@ -1,8 +1,3 @@
-use std::time::Duration;
-
-use rose_data::Item;
-use rose_game_common::components::QuestState;
-
 use super::DialogInstance;
 use crate::{
     components::PlayerCharacter,
@@ -17,6 +12,10 @@ use crate::{
 };
 use bevy::prelude::{Assets, EventWriter, Events, Local, Query, Res, ResMut, With, World};
 use bevy_egui::{egui, EguiContexts};
+
+use rose_data::Item;
+use rose_game_common::components::QuestState;
+use std::time::Duration;
 
 const IID_BTN_DELETE: i32 = 50;
 const IID_BTN_CLOSE: i32 = 10;
@@ -64,7 +63,7 @@ fn ui_add_quest_item_slot(
 
     if let Some(item) = item {
         response.on_hover_ui(|ui| {
-            ui_add_item_tooltip(ui, game_data, player_tooltip_data, item);
+            ui_add_item_tooltip(ui, game_data, player_tooltip_data, item, None);
         });
     }
 }

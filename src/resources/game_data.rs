@@ -7,7 +7,7 @@ use rose_data::{
     SoundDatabase, StatusEffectDatabase, StringDatabase, ZoneList,
 };
 use rose_file_readers::{LtbFile, StbFile, ZscFile};
-use rose_game_common::data::AbilityValueCalculator;
+use rose_game_common::data::{AbilityValueCalculator, DropTable};
 
 #[derive(Resource)]
 pub struct GameData {
@@ -32,4 +32,5 @@ pub struct GameData {
     pub zsc_special_object: ZscFile,
     pub stb_morph_object: StbFile,
     pub character_select_positions: Vec<Transform>,
+    pub drop_table: Box<dyn DropTable + Send + Sync>,
 }

@@ -18,7 +18,7 @@ pub struct LuaUserValueEntity {
 
 pub use lua_game_constants::LuaGameConstants;
 pub use lua_game_functions::LuaGameFunctions;
-pub use lua_quest_functions::LuaQuestFunctions;
+pub use lua_quest_functions::{LuaQuestFunctions, QF_CHECK_QUEST_CONDITION, QF_DO_QUEST_TRIGGER};
 pub use quest::{quest_apply_rewards, quest_check_conditions};
 pub use quest_condition_functions::quest_trigger_check_conditions;
 pub use quest_function_context::QuestFunctionContext;

@@ -1,23 +1,24 @@
-use std::cmp::Ordering;
-use std::fmt::Write;
+use std::{cmp::Ordering, collections::HashMap, fmt::Write};
 
-use bevy::ecs::query::WorldQuery;
+use bevy::{ecs::query::WorldQuery, utils::HashSet};
 use bevy_egui::egui;
-
 use rose_data::{
-    AbilityType, BaseItemData, EquipmentItem, Item, ItemClass, ItemGradeData, ItemType, JobId,
-    SkillAddAbility, SkillDamageType, SkillData, SkillId, SkillType, StackableItem,
-    StatusEffectType,
+    AbilityType, BaseItemData, EquipmentIndex, EquipmentItem, Item, ItemClass, ItemGradeData,
+    ItemType, JobId, NpcData, NpcId, SkillAddAbility, SkillDamageType, SkillData, SkillId,
+    SkillType, StackableItem, StatusEffectType,
 };
+use rose_data_irose::decode_item_base1000;
+use rose_file_readers::QsdReward;
 use rose_game_common::components::{
-    AbilityValues, CharacterInfo, Equipment, ExperiencePoints, HealthPoints, Inventory, Level,
-    ManaPoints, MoveSpeed, SkillList, SkillPoints, Stamina, StatPoints, Team, UnionMembership,
+    AbilityValues, CharacterInfo, Equipment, ExperiencePoints, HealthPoints, Inventory, ItemSlot,
+    Level, ManaPoints, MoveSpeed, SkillList, SkillPoints, Stamina, StatPoints, Team,
+    UnionMembership,
 };
 
 use crate::{bundles::ability_values_get_value, resources::GameData};
 
 const TOOLTIP_MAX_WIDTH: f32 = 300.0;
-const POSITIVE_EFFECT_COLOR: egui::Color32 = egui::Color32::from_rgb(100, 200, 255);
+pub const POSITIVE_EFFECT_COLOR: egui::Color32 = egui::Color32::from_rgb(100, 200, 255);
 pub const KEY_COLOR: egui::Color32 = egui::Color32::from_rgb(130, 145, 195);
 
 #[derive(WorldQuery)]
@@ -321,11 +322,319 @@ fn add_label_key_value(ui: &mut egui::Ui, key: &str, value: &str) {
     });
 }
 
+struct NpcDataSource {
+    id: NpcId,
+    level: i32,
+    name: String,
+}
+
+pub fn get_monster_drops(npc_data: &NpcData, game_data: &GameData) -> HashSet<String> {
+    let get_item = |drop_value: i32| -> Option<&BaseItemData> {
+        let Some(item_reference) = decode_item_base1000(drop_value as usize) else {
+            return None;
+        };
+
+        let Some(item_data) = game_data.items.get_base_item(item_reference) else {
+            return None;
+        };
+
+        Some(item_data)
+    };
+
+    let mut items: HashSet<String> = HashSet::new();
+
+    let drop_table_row = npc_data.drop_table_index as usize;
+    for column in 0..game_data.drop_table.get_columns() {
+        let mut drop_value = game_data
+            .drop_table
+            .lookup_drop(drop_table_row, column)
+            .unwrap_or(0);
+
+        if drop_value == 0 {
+            continue;
+        }
+
+        if (1..=4).contains(&drop_value) {
+            for index in 0..5 {
+                let drop_table_column = (26 + drop_value * 5 + index) as usize;
+
+                drop_value = game_data
+                    .drop_table
+                    .lookup_drop(drop_table_row, drop_table_column)
+                    .unwrap_or(0);
+
+                let Some(item) = get_item(drop_value) else {
+                    continue;
+                };
+
+                items.insert(item.name.to_string());
+            }
+        } else {
+            let Some(item) = get_item(drop_value) else {
+                continue;
+            };
+
+            items.insert(item.name.to_string());
+        }
+    }
+
+    items
+}
+
+fn get_item_drop_sources(game_data: &GameData, item: &Item) -> Vec<String> {
+    let item_reference = item.get_item_reference();
+    let mut sources: Vec<String> = Vec::new();
+
+    let is_match = |drop_value: i32| -> bool {
+        let Some(item_reference) = decode_item_base1000(drop_value as usize) else {
+            return false;
+        };
+
+        let Some(item_data) = game_data.items.get_base_item(item_reference) else {
+            return false;
+        };
+
+        item_data.id == item.get_item_reference()
+    };
+
+    let mut npc_sources: HashMap<String, NpcDataSource> = HashMap::new();
+    for npc_data in game_data.npcs.iter().filter(|it| !it.name.is_empty()) {
+        let mut has_drop = false;
+
+        let drop_table_row = npc_data.drop_table_index as usize;
+        for column in 0..game_data.drop_table.get_columns() {
+            let mut drop_value = game_data
+                .drop_table
+                .lookup_drop(drop_table_row, column)
+                .unwrap_or(0);
+
+            if drop_value == 0 {
+                continue;
+            }
+
+            if (1..=4).contains(&drop_value) {
+                for index in 0..5 {
+                    let drop_table_column = (26 + drop_value * 5 + index) as usize;
+
+                    drop_value = game_data
+                        .drop_table
+                        .lookup_drop(drop_table_row, drop_table_column)
+                        .unwrap_or(0);
+
+                    has_drop |= is_match(drop_value);
+                }
+            } else {
+                has_drop |= is_match(drop_value);
+            }
+        }
+
+        if has_drop {
+            npc_sources.insert(
+                npc_data.name.to_string(),
+                NpcDataSource {
+                    id: npc_data.id,
+                    level: npc_data.level,
+                    name: npc_data.name.to_string(),
+                },
+            );
+        }
+
+        for store_tab_id in npc_data.store_tabs {
+            let Some(store_tab_id) = store_tab_id else {
+                continue;
+            };
+
+            let Some(store_tab) = game_data.npcs.get_store_tab(store_tab_id) else {
+                continue;
+            };
+
+            if store_tab
+                .items
+                .values()
+                .find(|it| &&item_reference == it)
+                .is_some()
+            {
+                sources.push(npc_data.name.to_string());
+            }
+        }
+    }
+
+    let mut is_quest_reward = false;
+    for (_, trigger) in game_data.quests.triggers.iter() {
+        for reward in trigger.rewards.iter() {
+            let qsd_item = match reward {
+                QsdReward::AddItem { item, .. } => Some(item),
+                QsdReward::CalculatedItem { item, .. } => Some(item),
+                _ => None,
+            };
+
+            let Some(qsd_item) = qsd_item else {
+                continue;
+            };
+
+            let Some(qsd_item_reference) = game_data
+                .data_decoder
+                .decode_item_reference(qsd_item.item_number, qsd_item.item_type)
+            else {
+                continue;
+            };
+
+            if qsd_item_reference == item_reference {
+                is_quest_reward = true;
+            }
+        }
+    }
+
+    if is_quest_reward {
+        sources.push("[Quest]".to_string());
+    }
+
+    if let Some(craftable) = game_data
+        .items
+        .get_base_item(item_reference)
+        .map(|it| it.craft_skill_type > 0)
+    {
+        if craftable {
+            sources.push("[Crafting]".to_string());
+        }
+    }
+
+    for zone_entry in game_data.zone_list.iter() {
+        let mut has_drop = false;
+
+        let drop_table_row = zone_entry.id.get() as usize;
+        for column in 0..game_data.drop_table.get_columns() {
+            let mut drop_value = game_data
+                .drop_table
+                .lookup_drop(drop_table_row, column)
+                .unwrap_or(0);
+
+            if drop_value == 0 {
+                continue;
+            }
+
+            if (1..=4).contains(&drop_value) {
+                for index in 0..5 {
+                    let drop_table_column = (26 + drop_value * 5 + index) as usize;
+
+                    drop_value = game_data
+                        .drop_table
+                        .lookup_drop(drop_table_row, drop_table_column)
+                        .unwrap_or(0);
+
+                    has_drop |= is_match(drop_value);
+                }
+            } else {
+                has_drop |= is_match(drop_value);
+            }
+        }
+
+        if has_drop {
+            sources.push(zone_entry.name.to_string());
+        }
+    }
+
+    let mut npc_sources: Vec<&NpcDataSource> = npc_sources.values().collect();
+    npc_sources.sort_by(|a, b| {
+        if a.level != b.level {
+            return a.level.cmp(&b.level);
+        }
+
+        if a.id.get() != b.id.get() {
+            return a.id.get().cmp(&b.id.get());
+        }
+
+        a.name.cmp(&b.name)
+    });
+
+    npc_sources.sort_by_key(|npc| npc.level + npc.id.get() as i32);
+    for npc_source in npc_sources {
+        sources.push(npc_source.name.to_string());
+    }
+
+    sources
+}
+
+fn add_item_sources(ui: &mut egui::Ui, item: &Item, game_data: &GameData) {
+    let sources = get_item_drop_sources(game_data, item);
+    if sources.is_empty() {
+        ui.colored_label(egui::Color32::RED, "Unobtainable");
+        return;
+    }
+
+    add_label_key_value(ui, "Obtained from", "");
+    for source in sources {
+        ui.label(source);
+    }
+}
+
+fn add_item_compare(
+    ui: &mut egui::Ui,
+    item: &Item,
+    item_slot: Option<&ItemSlot>,
+    game_data: &GameData,
+    player: Option<&PlayerTooltipQueryItem>,
+) {
+    if item_slot.is_some_and(|it| match it {
+        ItemSlot::Equipment(_) => true,
+        _ => false,
+    }) {
+        return;
+    }
+
+    let equipment_index = match item.get_item_type() {
+        ItemType::Face => EquipmentIndex::Face,
+        ItemType::Head => EquipmentIndex::Head,
+        ItemType::Body => EquipmentIndex::Body,
+        ItemType::Hands => EquipmentIndex::Hands,
+        ItemType::Feet => EquipmentIndex::Feet,
+        ItemType::Back => EquipmentIndex::Back,
+        ItemType::Jewellery => {
+            let Some(jewellery_item) = game_data.items.get_jewellery_item(item.get_item_number())
+            else {
+                return;
+            };
+
+            match jewellery_item.item_data.class {
+                ItemClass::Ring => EquipmentIndex::Ring,
+                ItemClass::Necklace => EquipmentIndex::Necklace,
+                ItemClass::Earring => EquipmentIndex::Earring,
+                _ => return,
+            }
+        }
+        ItemType::Weapon => EquipmentIndex::Weapon,
+        ItemType::SubWeapon => EquipmentIndex::SubWeapon,
+        ItemType::Consumable => return,
+        ItemType::Gem => return,
+        ItemType::Material => return,
+        ItemType::Quest => return,
+        ItemType::Vehicle => return,
+    };
+
+    let Some(player) = player else {
+        return;
+    };
+
+    let Some(equipment_item) = &player.equipment.equipped_items[equipment_index] else {
+        return;
+    };
+
+    ui.separator();
+    ui_add_item_tooltip(
+        ui,
+        game_data,
+        Some(player),
+        &Item::Equipment(equipment_item.clone()),
+        Some(&ItemSlot::Equipment(equipment_index)),
+    );
+}
+
 pub fn ui_add_item_tooltip(
     ui: &mut egui::Ui,
     game_data: &GameData,
     player: Option<&PlayerTooltipQueryItem>,
     item: &Item,
+    item_slot: Option<&ItemSlot>,
 ) {
     ui.set_max_width(TOOLTIP_MAX_WIDTH);
     ui.style_mut().visuals.widgets.noninteractive.fg_stroke =
@@ -740,6 +1049,15 @@ pub fn ui_add_item_tooltip(
             }
         }
     }
+
+    let show_sources = ui.input(|ui| ui.modifiers.alt);
+    if show_sources {
+        add_item_sources(ui, item, game_data);
+    } else {
+        add_label_key_value(ui, "Hold Alt", "Show sources");
+    }
+
+    add_item_compare(ui, item, item_slot, game_data, player);
 }
 
 fn add_skill_name(ui: &mut egui::Ui, game_data: &GameData, skill_data: &SkillData) {

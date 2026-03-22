@@ -16,6 +16,9 @@ pub struct LuaQuestFunctions {
     >,
 }
 
+pub const QF_CHECK_QUEST_CONDITION: &str = "QF_checkQuestCondition";
+pub const QF_DO_QUEST_TRIGGER: &str = "QF_doQuestTrigger";
+
 impl Default for LuaQuestFunctions {
     fn default() -> Self {
         let mut closures: HashMap<
@@ -27,8 +30,8 @@ impl Default for LuaQuestFunctions {
             ) -> Vec<Lua4Value>,
         > = HashMap::new();
 
-        closures.insert("QF_checkQuestCondition".into(), QF_checkQuestCondition);
-        closures.insert("QF_doQuestTrigger".into(), QF_doQuestTrigger);
+        closures.insert(QF_CHECK_QUEST_CONDITION.into(), QF_checkQuestCondition);
+        closures.insert(QF_DO_QUEST_TRIGGER.into(), QF_doQuestTrigger);
         closures.insert("QF_findQuest".into(), QF_findQuest);
         closures.insert("QF_getEventOwner".into(), QF_getEventOwner);
         closures.insert("QF_getEpisodeVAR".into(), QF_getEpisodeVAR);

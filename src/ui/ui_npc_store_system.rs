@@ -182,7 +182,7 @@ fn ui_add_store_item_slot(
         }
 
         response.on_hover_ui(|ui| {
-            ui_add_item_tooltip(ui, game_data, player_tooltip_data, item);
+            ui_add_item_tooltip(ui, game_data, player_tooltip_data, item, None);
 
             ui.colored_label(egui::Color32::YELLOW, format!("Buy Price: {}", item_price));
         });
@@ -286,7 +286,7 @@ fn ui_add_buy_item_slot(
 
     if let Some(item) = item {
         response.on_hover_ui(|ui| {
-            ui_add_item_tooltip(ui, game_data, player_tooltip_data, &item);
+            ui_add_item_tooltip(ui, game_data, player_tooltip_data, &item, None);
 
             ui.colored_label(egui::Color32::YELLOW, format!("Buy Price: {}", item_price));
         });
@@ -368,7 +368,7 @@ fn ui_add_sell_item_slot(
 
     if let Some(item) = item {
         response.on_hover_ui(|ui| {
-            ui_add_item_tooltip(ui, game_data, player_tooltip_data, item);
+            ui_add_item_tooltip(ui, game_data, player_tooltip_data, item, None);
 
             ui.colored_label(egui::Color32::YELLOW, format!("Sell Value: {}", item_price));
         });

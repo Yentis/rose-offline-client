@@ -5,8 +5,8 @@ use bevy::{
 
 use rose_game_common::components::{
     AbilityValues, BasicStats, CharacterInfo, Equipment, ExperiencePoints, HealthPoints, Inventory,
-    Level, ManaPoints, MoveSpeed, Npc, QuestState, SkillPoints, Stamina, StatPoints, Team,
-    UnionMembership,
+    Level, ManaPoints, MoveSpeed, Npc, QuestState, SkillList, SkillPoints, Stamina, StatPoints,
+    Team, UnionMembership,
 };
 
 use crate::{
@@ -29,6 +29,7 @@ pub struct ScriptCharacterQuery<'w> {
     pub mana_points: &'w mut ManaPoints,
     pub move_speed: &'w MoveSpeed,
     pub skill_points: &'w SkillPoints,
+    pub skill_list: &'w SkillList,
     pub stamina: &'w Stamina,
     pub stat_points: &'w StatPoints,
     pub team: &'w Team,

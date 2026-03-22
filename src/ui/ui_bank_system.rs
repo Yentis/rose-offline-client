@@ -100,7 +100,7 @@ fn ui_add_bank_slot(
 
     if let Some(item) = item {
         response.on_hover_ui(|ui| {
-            ui_add_item_tooltip(ui, game_data, player_tooltip_data, item);
+            ui_add_item_tooltip(ui, game_data, player_tooltip_data, item, None);
         });
     }
 

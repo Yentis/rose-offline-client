@@ -5,7 +5,8 @@ use bevy::{
 use bevy_egui::{egui, EguiContexts};
 use rose_data::{AmmoIndex, EquipmentIndex, Item, ItemClass};
 use rose_game_common::components::{
-    AbilityValues, CharacterInfo, Equipment, ExperiencePoints, HealthPoints, Level, ManaPoints,
+    AbilityValues, CharacterInfo, Equipment, ExperiencePoints, HealthPoints, ItemSlot, Level,
+    ManaPoints,
 };
 
 use crate::{
@@ -98,7 +99,13 @@ fn add_equipped_weapon_slot(
 
     if let Some(item) = item {
         response.on_hover_ui(|ui| {
-            ui_add_item_tooltip(ui, game_data, player_tooltip_data, &item);
+            ui_add_item_tooltip(
+                ui,
+                game_data,
+                player_tooltip_data,
+                &item,
+                Some(&ItemSlot::Equipment(EquipmentIndex::Weapon)),
+            );
         });
     }
 }

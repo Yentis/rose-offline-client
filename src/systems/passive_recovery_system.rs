@@ -6,10 +6,7 @@ use rose_game_common::{
     data::PassiveRecoveryState,
 };
 
-use crate::{
-    components::{Command, Dead, PassiveRecoveryTime},
-    resources::GameData,
-};
+use crate::components::{Command, Dead, PassiveRecoveryTime};
 
 const RECOVERY_INTERVAL: Duration = Duration::from_secs(4);
 
@@ -22,7 +19,6 @@ pub fn passive_recovery_system(
         &mut HealthPoints,
         &mut ManaPoints,
     )>,
-    game_data: Res<GameData>,
     time: Res<Time>,
 ) {
     let delta = time.delta();
@@ -52,12 +48,8 @@ pub fn passive_recovery_system(
                 PassiveRecoveryState::Normal
             };
 
-            let recover_hp = game_data
-                .ability_value_calculator
-                .calculate_passive_recover_hp(ability_values, recovery_state);
-            let recover_mp = game_data
-                .ability_value_calculator
-                .calculate_passive_recover_mp(ability_values, recovery_state);
+            let recover_hp = ability_values.get_health_recovery(recovery_state);
+            let recover_mp = ability_values.get_mana_recovery(recovery_state);
 
             health_points.hp = i32::min(
                 health_points.hp + recover_hp,

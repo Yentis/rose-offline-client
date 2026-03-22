@@ -1,7 +1,8 @@
-use rose_data::QuestTrigger;
+use num_traits::ToPrimitive;
+use rose_data::{QuestTrigger, SkillId};
 use rose_file_readers::{
     QsdAbilityType, QsdClanPosition, QsdCondition, QsdConditionOperator, QsdEquipmentIndex,
-    QsdItem, QsdVariableType,
+    QsdItem, QsdSkillId, QsdVariableType,
 };
 
 use crate::{
@@ -212,6 +213,19 @@ fn quest_condition_in_clan(
     character.clan_membership.is_some() == in_clan
 }
 
+fn quest_condition_has_skill(
+    script_context: &ScriptFunctionContext,
+    id: &QsdSkillId,
+    has_skill: bool,
+) -> bool {
+    let character = script_context.query_player.single();
+    character
+        .skill_list
+        .find_skill(&SkillId::new(id.to_u16().unwrap()).unwrap())
+        .is_some()
+        == has_skill
+}
+
 pub fn quest_trigger_check_conditions(
     script_resources: &ScriptFunctionResources,
     script_context: &mut ScriptFunctionContext,
@@ -279,6 +293,13 @@ pub fn quest_trigger_check_conditions(
             ),
             QsdCondition::HasClan { has_clan } => {
                 quest_condition_in_clan(script_resources, script_context, quest_context, has_clan)
+            }
+            QsdCondition::ObjectDistance { .. } => {
+                // TODO
+                false
+            }
+            QsdCondition::HasSkill { id, has_skill } => {
+                quest_condition_has_skill(script_context, &id, has_skill)
             }
             // Server side only conditions:
             QsdCondition::RandomPercent { .. }

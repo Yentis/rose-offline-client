@@ -61,6 +61,7 @@ mod vehicle_sound_system;
 mod visible_status_effects_system;
 mod world_connection_system;
 mod world_time_system;
+mod zone_collider_scale_fix_system;
 mod zone_time_system;
 mod zone_viewer_system;
 
@@ -82,7 +83,7 @@ pub use collision_system::{
     collision_height_only_system, collision_player_system, collision_player_system_join_zoin,
 };
 pub use command_system::command_system;
-pub use conversation_dialog_system::conversation_dialog_system;
+pub use conversation_dialog_system::{conversation_dialog_system, LuaVMContext};
 pub use cooldown_system::cooldown_system;
 pub use damage_digit_render_system::damage_digit_render_system;
 pub use debug_inspector_system::DebugInspectorPlugin;
@@ -136,5 +137,6 @@ pub use vehicle_sound_system::vehicle_sound_system;
 pub use visible_status_effects_system::visible_status_effects_system;
 pub use world_connection_system::world_connection_system;
 pub use world_time_system::world_time_system;
+pub use zone_collider_scale_fix_system::zone_collider_scale_fix_system;
 pub use zone_time_system::zone_time_system;
 pub use zone_viewer_system::zone_viewer_enter_system;

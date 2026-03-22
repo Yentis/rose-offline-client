@@ -385,6 +385,7 @@ pub fn ui_debug_item_list_system(
                                                         &game_data,
                                                         player_tooltip_data.as_ref(),
                                                         &item,
+                                                        None,
                                                     );
                                                 }
                                             },
